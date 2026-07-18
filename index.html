@@ -189,6 +189,7 @@
     flex-shrink: 0;
     background: var(--bg);
   }
+  .fitting-meta { flex: 1; }
   .fitting-meta .name { font-size: 14px; }
   .fitting-meta .stars { font-size: 12px; color: var(--outline); }
   .delete-menu { display: flex; gap: 8px; }
@@ -201,6 +202,66 @@
     border-top: 1px solid var(--outline);
     margin-top: 12px;
   }
+  .top-bar-actions { display: flex; gap: 8px; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .fitting-item.selected-for-compare {
+    background: #ffffffaa;
+    border-radius: 10px;
+    outline: 2px solid var(--outline);
+  }
+  .compare-badge {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    border: 1.5px solid var(--outline);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+
+  /* 비교 화면 */
+  .compare-screen { padding-bottom: 32px; }
+  .compare-preview-row {
+    display: flex;
+    gap: 8px;
+    padding: 16px 12px;
+    justify-content: center;
+  }
+  .compare-preview-cell {
+    flex: 1 1 0;
+    max-width: 33%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .compare-preview-cell svg { width: 100%; height: auto; }
+  .compare-dress-label {
+    font-size: 12px;
+    margin-top: 4px;
+    text-align: center;
+  }
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .compare-table th, .compare-table td {
+    padding: 8px 6px;
+    border-bottom: 1px solid var(--outline);
+    text-align: center;
+  }
+  .compare-table th {
+    text-align: left;
+    font-weight: 600;
+    font-size: 12px;
+    opacity: 0.85;
+    width: 88px;
+    padding-left: 12px;
+  }
+  .compare-table tr.row-same td { opacity: 0.45; }
+  .compare-table tr.row-diff td { font-weight: 600; }
 </style>
 </head>
 <body>
@@ -681,6 +742,8 @@ let state = {
   lastVisitedAt: '',
   deleteMenuId: null,
   uiCollapsed: { fitNote: true, memo: true },
+  compareMode: false, // 목록 화면의 "비교하기" 선택 모드 여부
+  compareSelection: [], // 비교 선택된 fitting id, 최대 3개
 };
 
 function todayStr() {
@@ -772,6 +835,8 @@ function render() {
   app.innerHTML = '';
   if (state.view === 'record' && state.current) {
     app.appendChild(buildRecordScreen());
+  } else if (state.view === 'compare' && state.compareSelection.length >= 2) {
+    app.appendChild(buildCompareScreen());
   } else {
     app.appendChild(buildListScreen());
   }
@@ -1123,17 +1188,88 @@ function buildListScreen() {
 function buildListTopBar() {
   const topBar = document.createElement('div');
   topBar.className = 'top-bar';
+
   const title = document.createElement('span');
   title.className = 'title';
-  title.textContent = '내 드레스 목록';
+  title.textContent = state.compareMode
+    ? `비교할 드레스 선택 (${state.compareSelection.length}/3)`
+    : '내 드레스 목록';
   topBar.appendChild(title);
-  const newBtn = document.createElement('button');
-  newBtn.type = 'button';
-  newBtn.className = 'btn primary';
-  newBtn.textContent = '+ 새 기록';
-  newBtn.addEventListener('click', startNewFitting);
-  topBar.appendChild(newBtn);
+
+  const actions = document.createElement('div');
+  actions.className = 'top-bar-actions';
+
+  if (state.compareMode) {
+    const cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.className = 'btn';
+    cancelBtn.textContent = '취소';
+    cancelBtn.addEventListener('click', exitCompareMode);
+    actions.appendChild(cancelBtn);
+
+    const confirmBtn = document.createElement('button');
+    confirmBtn.type = 'button';
+    confirmBtn.className = 'btn primary';
+    confirmBtn.textContent = `비교하기(${state.compareSelection.length})`;
+    confirmBtn.disabled = state.compareSelection.length < 2;
+    confirmBtn.addEventListener('click', openCompareScreen);
+    actions.appendChild(confirmBtn);
+  } else {
+    if (state.store.fittings.length >= 2) {
+      const compareBtn = document.createElement('button');
+      compareBtn.type = 'button';
+      compareBtn.className = 'btn';
+      compareBtn.textContent = '비교하기';
+      compareBtn.addEventListener('click', enterCompareMode);
+      actions.appendChild(compareBtn);
+    }
+
+    const newBtn = document.createElement('button');
+    newBtn.type = 'button';
+    newBtn.className = 'btn primary';
+    newBtn.textContent = '+ 새 기록';
+    newBtn.addEventListener('click', startNewFitting);
+    actions.appendChild(newBtn);
+  }
+
+  topBar.appendChild(actions);
   return topBar;
+}
+
+// ── 비교하기 선택 모드 (SPEC.md §6.3) ──────────────────────────────────────
+function enterCompareMode() {
+  state.compareMode = true;
+  state.compareSelection = [];
+  render();
+}
+
+function exitCompareMode() {
+  state.compareMode = false;
+  state.compareSelection = [];
+  render();
+}
+
+function toggleCompareSelect(id) {
+  const idx = state.compareSelection.indexOf(id);
+  if (idx >= 0) {
+    state.compareSelection.splice(idx, 1);
+  } else if (state.compareSelection.length < 3) {
+    state.compareSelection.push(id);
+  }
+  render();
+}
+
+function openCompareScreen() {
+  if (state.compareSelection.length < 2) return;
+  state.view = 'compare';
+  render();
+}
+
+function backToListFromCompare() {
+  state.view = 'list';
+  state.compareMode = false;
+  state.compareSelection = [];
+  render();
 }
 
 function buildEmptyState() {
@@ -1176,7 +1312,8 @@ function buildGroupedList() {
 
 function buildFittingItem(fitting) {
   const item = document.createElement('div');
-  item.className = 'fitting-item';
+  const isSelected = state.compareSelection.includes(fitting.id);
+  item.className = 'fitting-item' + (isSelected ? ' selected-for-compare' : '');
   item.appendChild(buildPreviewSvg(fitting.sketch));
 
   const meta = document.createElement('div');
@@ -1191,7 +1328,13 @@ function buildFittingItem(fitting) {
   meta.appendChild(stars);
   item.appendChild(meta);
 
-  if (state.deleteMenuId === fitting.id) {
+  if (state.compareMode) {
+    const badge = document.createElement('div');
+    badge.className = 'compare-badge';
+    badge.textContent = isSelected ? '✓' : '';
+    item.appendChild(badge);
+    item.addEventListener('click', () => toggleCompareSelect(fitting.id));
+  } else if (state.deleteMenuId === fitting.id) {
     item.appendChild(buildDeleteMenu(fitting.id));
   } else {
     attachLongPress(item, () => {
@@ -1288,6 +1431,94 @@ function importJson(file) {
     }
   };
   reader.readAsText(file);
+}
+
+// ── 비교 화면 (SPEC.md §6.4) — 이 앱의 존재 이유이므로 여기에 가장 공을 들인다 ─────
+function buildCompareScreen() {
+  const wrap = document.createElement('div');
+  wrap.className = 'compare-screen';
+
+  const topBar = document.createElement('div');
+  topBar.className = 'top-bar';
+  const backBtn = document.createElement('button');
+  backBtn.type = 'button';
+  backBtn.className = 'btn';
+  backBtn.textContent = '← 목록';
+  backBtn.addEventListener('click', backToListFromCompare);
+  topBar.appendChild(backBtn);
+  const title = document.createElement('span');
+  title.className = 'title';
+  title.textContent = '비교';
+  topBar.appendChild(title);
+  wrap.appendChild(topBar);
+
+  const fittings = state.compareSelection
+    .map((id) => state.store.fittings.find((f) => f.id === id))
+    .filter(Boolean);
+
+  wrap.appendChild(buildComparePreviewRow(fittings));
+  wrap.appendChild(buildCompareTable(fittings));
+  return wrap;
+}
+
+function buildComparePreviewRow(fittings) {
+  const row = document.createElement('div');
+  row.className = 'compare-preview-row';
+  fittings.forEach((f) => {
+    const cell = document.createElement('div');
+    cell.className = 'compare-preview-cell';
+    cell.appendChild(buildPreviewSvg(f.sketch));
+    const label = document.createElement('div');
+    label.className = 'compare-dress-label';
+    label.textContent = f.dressName || '(이름 없음)';
+    cell.appendChild(label);
+    row.appendChild(cell);
+  });
+  return row;
+}
+
+// 행=속성, 열=드레스. 셀 값이 전부 같은 행은 흐리게, 하나라도 다르면 강조한다 (SPEC.md §6.4)
+const COMPARE_ROWS = [
+  { label: '매장', get: (f) => f.shopName || '-' },
+  { label: '드레스명', get: (f) => f.dressName || '-' },
+  { label: '가격', get: (f) => (f.priceKrw ? `${f.priceKrw.toLocaleString()}원` : '-') },
+  { label: '별점', get: (f) => (f.rating ? '★'.repeat(f.rating) : '-') },
+  { label: '실루엣', get: (f) => LABEL.ko.silhouette[f.sketch.silhouette] },
+  { label: '넥라인', get: (f) => LABEL.ko.neckline[f.sketch.neckline] },
+  { label: '소매', get: (f) => LABEL.ko.sleeve[f.sketch.sleeve] },
+  { label: '스커트 텍스처', get: (f) => LABEL.ko.texture[f.sketch.skirtTexture] },
+  { label: '보디스 텍스처', get: (f) => LABEL.ko.texture[f.sketch.bodiceTexture] },
+  { label: '소매 텍스처', get: (f) => LABEL.ko.texture[f.sketch.sleeveTexture] },
+  { label: '허리 라인', get: (f) => LABEL.ko.waist[f.sketch.waist] },
+  { label: '뒷모습', get: (f) => LABEL.ko.back[f.sketch.back] },
+  { label: '트레인', get: (f) => LABEL.ko.train[f.sketch.train] },
+];
+
+function buildCompareTable(fittings) {
+  const table = document.createElement('table');
+  table.className = 'compare-table';
+
+  COMPARE_ROWS.forEach(({ label, get }) => {
+    const values = fittings.map(get);
+    const allSame = values.every((v) => v === values[0]);
+
+    const tr = document.createElement('tr');
+    tr.className = allSame ? 'row-same' : 'row-diff';
+
+    const th = document.createElement('th');
+    th.textContent = label;
+    tr.appendChild(th);
+
+    values.forEach((v) => {
+      const td = document.createElement('td');
+      td.textContent = v;
+      tr.appendChild(td);
+    });
+
+    table.appendChild(tr);
+  });
+
+  return table;
 }
 
 render();
