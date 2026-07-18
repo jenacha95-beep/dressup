@@ -18,83 +18,7 @@
     color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Malgun Gothic", sans-serif;
   }
-  h1 {
-    font-size: 15px;
-    font-weight: 600;
-    text-align: center;
-    padding: 16px 0 4px;
-    margin: 0;
-  }
-  p.note {
-    text-align: center;
-    font-size: 12px;
-    opacity: 0.7;
-    margin: 0 0 12px;
-  }
-  .debug-row {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 12px;
-    padding: 8px 12px 24px;
-  }
-  .debug-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  .debug-item svg {
-    width: 110px;
-    height: auto;
-    background: var(--bg);
-  }
-  .debug-item span {
-    font-size: 12px;
-    margin-top: 4px;
-  }
-  .dress-shape {
-    fill: var(--dress-fill);
-    stroke: var(--outline);
-    stroke-width: 1;
-  }
-  .dress-shape.other {
-    stroke-dasharray: 4 3;
-  }
-  .waist-guide {
-    stroke: var(--outline);
-    stroke-width: 0.5;
-    stroke-dasharray: 2 2;
-    opacity: 0.5;
-  }
-  h2 {
-    font-size: 15px;
-    font-weight: 600;
-    text-align: center;
-    padding: 24px 0 4px;
-    margin: 0;
-  }
-  .matrix {
-    display: grid;
-    gap: 2px;
-    padding: 8px 12px 32px;
-    justify-content: center;
-  }
-  .matrix .cell {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    background: #fff2;
-  }
-  .matrix .cell.header {
-    font-size: 10px;
-    justify-content: center;
-    text-align: center;
-    padding: 2px;
-  }
-  .matrix .cell svg {
-    width: 60px;
-    height: auto;
-  }
+  button, input, textarea { font-family: inherit; }
   .dress-outline {
     stroke: var(--outline);
     stroke-width: 1;
@@ -107,28 +31,165 @@
     stroke-width: 1;
     stroke-dasharray: 3 2;
   }
+
+  /* 공용 */
+  .btn {
+    font-size: 14px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--outline);
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+  }
+  .btn.primary {
+    background: var(--outline);
+    color: var(--dress-fill);
+  }
+  .btn:focus-visible, .chip:focus-visible {
+    outline: 2px solid var(--outline);
+    outline-offset: 2px;
+  }
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--outline);
+  }
+  .top-bar .title {
+    font-size: 15px;
+    font-weight: 600;
+  }
+
+  /* 기록 화면 */
+  .record-screen {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+  }
+  .preview-pane {
+    flex: 0 0 35vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid var(--outline);
+  }
+  .preview-pane svg {
+    /* 부모(.preview-pane)의 %height를 쓰면 flex 컬럼 레이아웃과 순환 의존이 생겨
+       미리보기가 부풀어 오르는 버그가 생긴다. 뷰포트 단위로 직접 고정해 우회한다 */
+    height: 35vh;
+    width: auto;
+  }
+  .scroll-pane {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 8px 12px 32px;
+  }
+  .field-group { margin-bottom: 14px; }
+  .field-group label {
+    display: block;
+    font-size: 12px;
+    opacity: 0.75;
+    margin-bottom: 4px;
+  }
+  .field-row { display: flex; gap: 8px; }
+  .field-row > .field-group { flex: 1; }
+  input[type="text"], input[type="date"], input[type="number"], textarea {
+    width: 100%;
+    font-size: 14px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--outline);
+    background: #ffffff88;
+    color: var(--text);
+  }
+  textarea { resize: vertical; min-height: 60px; }
+  .section-title {
+    font-size: 13px;
+    font-weight: 600;
+    margin: 18px 0 6px;
+  }
+  .chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 4px 8px;
+    border: 1.5px solid transparent;
+    border-radius: 10px;
+    background: #ffffff55;
+    color: var(--text);
+    cursor: pointer;
+  }
+  .chip.selected {
+    border-color: var(--outline);
+    border-width: 2px;
+    background: #ffffffcc;
+  }
+  .chip svg { width: 40px; height: auto; }
+  .chip .chip-label { font-size: 11px; margin-top: 2px; text-align: center; }
+  .chip.text-only { min-width: auto; padding: 8px 12px; }
+  .other-input-wrap { margin-top: 6px; }
+  .collapsible-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 10px 0;
+    cursor: pointer;
+    border-top: 1px solid var(--outline);
+    margin-top: 10px;
+  }
+
+  /* 목록 화면 */
+  .list-screen { padding-bottom: 32px; }
+  .backup-note {
+    font-size: 12px;
+    opacity: 0.75;
+    text-align: center;
+    padding: 8px 12px;
+    margin: 0;
+  }
+  .shop-group-title {
+    font-size: 13px;
+    font-weight: 600;
+    padding: 14px 12px 4px;
+  }
+  .fitting-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    cursor: pointer;
+  }
+  .fitting-item svg {
+    width: 60px;
+    height: 105px;
+    flex-shrink: 0;
+    background: var(--bg);
+  }
+  .fitting-meta .name { font-size: 14px; }
+  .fitting-meta .stars { font-size: 12px; color: var(--outline); }
+  .delete-menu { display: flex; gap: 8px; }
+  .empty-state { text-align: center; padding: 60px 20px; opacity: 0.85; }
+  .backup-row {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    padding: 16px 12px;
+    border-top: 1px solid var(--outline);
+    margin-top: 12px;
+  }
 </style>
 </head>
 <body>
-<h1>Phase 1 — 실루엣 확인 (임시 화면)</h1>
-<p class="note">6종이 서로 구분되고 모두 자기 허리선에서 시작하는지 확인용. Phase 4에서 실제 화면으로 교체됩니다.</p>
-<div class="debug-row" id="debugRow"></div>
-
-<h2>Phase 2 — 넥라인 × 실루엣 합성 확인 (임시 화면)</h2>
-<p class="note">6×8=48조합 중 이음매가 어긋나거나 형태가 무너진 칸이 있는지 확인용. Phase 4에서 실제 화면으로 교체됩니다.</p>
-<div class="matrix" id="necklineMatrix"></div>
-
-<h2>Phase 3 — 소매 확인 (임시 화면)</h2>
-<p class="note">칩용 크롭(viewBox 100 100 200 200)으로 미리보기. 6종 + 기타.</p>
-<div class="debug-row" id="sleeveRow"></div>
-
-<h2>Phase 3 — 텍스처 확인 (임시 화면)</h2>
-<p class="note">패턴 스와치. 레이스가 그물무늬로 보이면 실패 — 튤(net)과 구분되는지 확인.</p>
-<div class="debug-row" id="textureRow"></div>
-
-<h2>Phase 3 — 스커트·보디스·소매 텍스처 독립 적용 확인 (임시 화면)</h2>
-<p class="note">skirtTexture/bodiceTexture/sleeveTexture를 각각 다르게 골라도 정상 합성되는지 확인용.</p>
-<div class="debug-row" id="perPartTextureRow"></div>
+<div id="app"></div>
 
 <script>
 // SVG 좌표계 앵커 상수 (SPEC.md §3) — 값/이름 재배열 금지
@@ -151,8 +212,7 @@ const A = {
   hemY:       640,
 };
 
-// 한글 라벨 (Phase 3까지: 실루엣 + 넥라인 + 소매 + 텍스처). texture 라벨은 skirtTexture/
-// bodiceTexture/sleeveTexture가 공유한다 (SPEC.md §4) — 디테일 카테고리는 두지 않는다
+// 한글 라벨. texture 라벨은 skirtTexture/bodiceTexture/sleeveTexture가 공유한다 (SPEC.md §4)
 const LABEL = {
   ko: {
     silhouette: {
@@ -171,6 +231,17 @@ const LABEL = {
       satin: '새틴', mikado: '미카도', tulle: '튤', lace: '레이스',
       organza: '오간자', beaded: '비즈', other: '기타',
     },
+    waist: {
+      natural: '내추럴 웨이스트', drop: '드롭 웨이스트', empire: '엠파이어 웨이스트',
+      basque: '바스크 웨이스트', other: '기타',
+    },
+    back: {
+      vback: '브이백', lowback: '로우백', keyhole: '키홀백', buttons: '단추 장식',
+      illusion: '일루전백', other: '기타',
+    },
+    train: {
+      none: '없음', sweep: '스윕 트레인', chapel: '채플 트레인', cathedral: '캐시드럴 트레인', other: '기타',
+    },
   },
 };
 
@@ -179,6 +250,9 @@ const SILHOUETTE_ORDER = ['aline', 'ballgown', 'mermaid', 'trumpet', 'sheath', '
 const NECKLINE_ORDER = ['sweetheart', 'v', 'square', 'halter', 'offshoulder', 'bateau', 'illusion', 'straight', 'other'];
 const SLEEVE_ORDER = ['none', 'cap', 'short', 'long', 'puff', 'detachable', 'other'];
 const TEXTURE_ORDER = ['satin', 'mikado', 'tulle', 'lace', 'organza', 'beaded', 'other'];
+const WAIST_ORDER = ['natural', 'drop', 'empire', 'basque', 'other'];
+const BACK_ORDER = ['vback', 'lowback', 'keyhole', 'buttons', 'illusion', 'other'];
+const TRAIN_ORDER = ['none', 'sweep', 'chapel', 'cathedral', 'other'];
 
 const silhouette = {};
 
@@ -396,7 +470,7 @@ function stripMove(d) {
   return d.replace(/^\s*M\s*[-\d.]+\s+[-\d.]+/, '');
 }
 
-// 보디스 = 넥라인이 정하는 윗변 + 좌우 옆선 + (실루엣이 쓰는) 허리선. 스커트와 fill이 같아 이음매가 안 보인다
+// 보디스 = 넥라인이 정하는 윗변 + 좌우 옆선 + (실루엣이 쓰는) 허리선
 function buildBodice(A, necklineId, waistY) {
   const { waistL, waistR } = waistPointsAt(A, waistY);
   const { d: necklineD, strapless } = neckline[necklineId](A);
@@ -467,9 +541,9 @@ function registerTexturePattern(svgNS, defs, textureId) {
   return `url(#${id})`;
 }
 
-// 스커트+보디스+소매까지 합성한 드레스 <svg>를 반환 (Phase 3 미리보기·매트릭스 공용).
-// 스커트/보디스/소매는 각각 독립된 텍스처를 받는다 (SPEC.md §3.3, §4) — 같은 새틴이라도
-// 파츠마다 다른 텍스처를 고르면 그 경계가 보이는 게 정상이다 (좌표만 허리선에서 정확히 겹친다)
+// 스커트+보디스+소매까지 합성한 드레스 <svg>를 반환. 스커트/보디스/소매는 각각 독립된
+// 텍스처를 받는다 (SPEC.md §3.3, §4) — 파츠마다 다른 텍스처를 고르면 허리선에 경계가
+// 보이는 게 정상이다 (좌표는 허리선에서 정확히 겹친다)
 function buildFullDressSvg(silhouetteId, necklineId, sleeveId, skirtTextureId, bodiceTextureId, sleeveTextureId) {
   const svgNS = 'http://www.w3.org/2000/svg';
   const svg = document.createElementNS(svgNS, 'svg');
@@ -519,162 +593,585 @@ function buildFullDressSvg(silhouetteId, necklineId, sleeveId, skirtTextureId, b
   return svg;
 }
 
-// Phase 3 디버그 행 공용: label을 붙인 아이템 하나를 만들어 컨테이너에 추가
-function appendDebugItem(container, svg, labelText) {
-  const item = document.createElement('div');
-  item.className = 'debug-item';
-  item.appendChild(svg);
-  const label = document.createElement('span');
-  label.textContent = labelText;
-  item.appendChild(label);
-  container.appendChild(item);
-}
-
-// 소매 칩 크롭 확인 — SPEC.md §3.5 소매 칩 viewBox. 넥라인은 어깨점까지 닿는 v넥으로 골라
-// 소매가 보디스 어깨선에 자연스럽게 이어붙는지 보이게 한다 (스트랩리스 넥라인은 어깨점이 비어 있다)
-function renderSleeveRow() {
-  const row = document.getElementById('sleeveRow');
-  SLEEVE_ORDER.forEach((id) => {
-    const svg = buildFullDressSvg('aline', 'v', id, 'satin', 'satin', 'satin');
-    svg.setAttribute('viewBox', '100 100 200 200');
-    appendDebugItem(row, svg, LABEL.ko.sleeve[id]);
-  });
-}
-
-// 텍스처 스와치 확인 — 드레스 형태와 무관하게 패턴 자체만 작은 사각형으로 렌더링
-function renderTextureRow() {
-  const row = document.getElementById('textureRow');
+// 텍스처 칩용 작은 스와치(패턴 자체만) — 드레스 형태와 무관
+function buildTextureSwatch(textureId) {
   const svgNS = 'http://www.w3.org/2000/svg';
-  TEXTURE_ORDER.forEach((id) => {
-    const svg = document.createElementNS(svgNS, 'svg');
-    svg.setAttribute('viewBox', '0 0 40 40');
-    const defs = document.createElementNS(svgNS, 'defs');
-    svg.appendChild(defs);
-    const fillUrl = registerTexturePattern(svgNS, defs, id);
-    const rect = document.createElementNS(svgNS, 'rect');
-    rect.setAttribute('width', '40');
-    rect.setAttribute('height', '40');
-    rect.setAttribute('fill', fillUrl);
-    rect.setAttribute('class', 'dress-outline');
-    svg.appendChild(rect);
-    appendDebugItem(row, svg, LABEL.ko.texture[id]);
-  });
-}
-
-// 스커트/보디스/소매가 서로 다른 텍스처를 동시에 써도 정상 합성되는지 확인
-// (예: 스커트=새틴, 보디스=비즈, 소매=오간자 — 사용자가 실제로 원하는 조합)
-function renderPerPartTextureRow() {
-  const row = document.getElementById('perPartTextureRow');
-  const combos = [
-    { sleeveId: 'long', skirtTex: 'satin', bodiceTex: 'satin', sleeveTex: 'satin' },
-    { sleeveId: 'long', skirtTex: 'satin', bodiceTex: 'beaded', sleeveTex: 'organza' },
-    { sleeveId: 'cap', skirtTex: 'mikado', bodiceTex: 'lace', sleeveTex: 'lace' },
-    { sleeveId: 'none', skirtTex: 'tulle', bodiceTex: 'beaded', sleeveTex: 'satin' },
-  ];
-  combos.forEach(({ sleeveId, skirtTex, bodiceTex, sleeveTex }) => {
-    const svg = buildFullDressSvg('aline', 'v', sleeveId, skirtTex, bodiceTex, sleeveTex);
-    const label = `${LABEL.ko.texture[skirtTex]}/${LABEL.ko.texture[bodiceTex]}/${LABEL.ko.texture[sleeveTex]}`;
-    appendDebugItem(row, svg, label);
-  });
-}
-
-// Phase 1 임시 확인 페이지 — 6종이 서로 구분되고 자기 허리선에서 시작하는지 검증용
-function renderDebugRow() {
-  const row = document.getElementById('debugRow');
-  const svgNS = 'http://www.w3.org/2000/svg';
-
-  SILHOUETTE_ORDER.forEach((id) => {
-    const { d, waistY } = silhouette[id](A);
-
-    const svg = document.createElementNS(svgNS, 'svg');
-    svg.setAttribute('viewBox', '0 0 400 700');
-
-    const guide = document.createElementNS(svgNS, 'line');
-    guide.setAttribute('x1', '0');
-    guide.setAttribute('x2', '400');
-    guide.setAttribute('y1', waistY);
-    guide.setAttribute('y2', waistY);
-    guide.setAttribute('class', 'waist-guide');
-    svg.appendChild(guide);
-
-    const path = document.createElementNS(svgNS, 'path');
-    path.setAttribute('d', d);
-    path.setAttribute('class', 'dress-shape' + (id === 'other' ? ' other' : ''));
-    svg.appendChild(path);
-
-    const item = document.createElement('div');
-    item.className = 'debug-item';
-    item.appendChild(svg);
-
-    const label = document.createElement('span');
-    label.textContent = LABEL.ko.silhouette[id];
-    item.appendChild(label);
-
-    row.appendChild(item);
-  });
-}
-
-// 스커트+보디스를 합성한 드레스 하나를 그린 <svg> 엘리먼트를 반환 (미리보기·매트릭스·썸네일에서 공용)
-function buildDressSvg(silhouetteId, necklineId) {
-  const svgNS = 'http://www.w3.org/2000/svg';
-  const { d: skirtD, waistY } = silhouette[silhouetteId](A);
-  const bodiceD = buildBodice(A, necklineId, waistY);
-
   const svg = document.createElementNS(svgNS, 'svg');
-  svg.setAttribute('viewBox', '0 0 400 700');
-
-  const skirt = document.createElementNS(svgNS, 'path');
-  skirt.setAttribute('d', skirtD);
-  skirt.setAttribute('class', 'dress-shape' + (silhouetteId === 'other' ? ' other' : ''));
-  svg.appendChild(skirt);
-
-  const bodice = document.createElementNS(svgNS, 'path');
-  bodice.setAttribute('d', bodiceD);
-  bodice.setAttribute('class', 'dress-shape' + (necklineId === 'other' ? ' other' : ''));
-  svg.appendChild(bodice);
-
+  svg.setAttribute('viewBox', '0 0 40 40');
+  const defs = document.createElementNS(svgNS, 'defs');
+  svg.appendChild(defs);
+  const fillUrl = registerTexturePattern(svgNS, defs, textureId);
+  const rect = document.createElementNS(svgNS, 'rect');
+  rect.setAttribute('width', '40');
+  rect.setAttribute('height', '40');
+  rect.setAttribute('fill', fillUrl);
+  rect.setAttribute('class', 'dress-outline');
+  svg.appendChild(rect);
   return svg;
 }
 
-// Phase 2 디버그 매트릭스 — 6실루엣×8넥라인=48조합 전부 렌더링해 이음매/형태가 무너진 칸이 있는지 확인
-function renderNecklineMatrix() {
-  const rows = SILHOUETTE_ORDER.filter((id) => id !== 'other');
-  const cols = NECKLINE_ORDER.filter((id) => id !== 'other');
+// ── 저장소 (SPEC.md §4, §9) ───────────────────────────────────────────────
+const STORAGE_KEY = 'dressTourData';
 
-  const grid = document.getElementById('necklineMatrix');
-  grid.style.gridTemplateColumns = `70px repeat(${cols.length}, 70px)`;
-
-  const corner = document.createElement('div');
-  corner.className = 'cell header';
-  grid.appendChild(corner);
-
-  cols.forEach((necklineId) => {
-    const header = document.createElement('div');
-    header.className = 'cell header';
-    header.textContent = LABEL.ko.neckline[necklineId];
-    grid.appendChild(header);
-  });
-
-  rows.forEach((silhouetteId) => {
-    const rowHeader = document.createElement('div');
-    rowHeader.className = 'cell header';
-    rowHeader.textContent = LABEL.ko.silhouette[silhouetteId];
-    grid.appendChild(rowHeader);
-
-    cols.forEach((necklineId) => {
-      const cell = document.createElement('div');
-      cell.className = 'cell';
-      cell.appendChild(buildDressSvg(silhouetteId, necklineId));
-      grid.appendChild(cell);
-    });
-  });
+function defaultStore() {
+  return { version: 2, fittings: [], onboarded: false };
 }
 
-renderDebugRow();
-renderNecklineMatrix();
-renderSleeveRow();
-renderTextureRow();
-renderPerPartTextureRow();
+// Store.version 불일치 시 이 함수를 거친다. 지금은 버전 2 하나뿐이라 실제 변환 대상이
+// 없지만, 실패해도 기존 localStorage 값을 지우지 않고 빈 스토어로만 대체한다
+function migrateStore() {
+  return null;
+}
+
+function loadStore() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return defaultStore();
+    const parsed = JSON.parse(raw);
+    if (parsed && parsed.version === 2 && Array.isArray(parsed.fittings)) return parsed;
+    return migrateStore(parsed) || defaultStore();
+  } catch (e) {
+    return defaultStore();
+  }
+}
+
+function persistStore() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state.store));
+}
+
+let saveTimer = null;
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(persistStore, 300);
+}
+
+// ── 전역 상태 (SPEC.md §9: 전역 상태는 객체 하나) ─────────────────────────
+let state = {
+  store: loadStore(),
+  view: 'list', // 'record' | 'list' | 'compare' | 'shared'
+  current: null, // 기록 화면에서 편집 중인 Fitting
+  lastShopName: '',
+  lastVisitedAt: '',
+  deleteMenuId: null,
+  uiCollapsed: { fitNote: true, memo: true },
+};
+
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+// 새 기록의 기본값 — 아무것도 안 골라도 저장 가능해야 한다 (SPEC.md §4)
+function defaultSketch() {
+  return {
+    silhouette: 'aline', neckline: 'sweetheart', sleeve: 'none',
+    waist: 'natural', back: 'vback', train: 'sweep',
+    skirtTexture: 'satin', bodiceTexture: 'satin', sleeveTexture: 'satin',
+    custom: {},
+  };
+}
+
+function createFitting() {
+  return {
+    id: crypto.randomUUID(),
+    shopName: state.lastShopName,
+    visitedAt: state.lastVisitedAt || todayStr(),
+    dressName: '', priceKrw: null, rating: null, memo: '', fitNote: '',
+    sketch: defaultSketch(),
+  };
+}
+
+// ── 화면 전환 ──────────────────────────────────────────────────────────────
+function startNewFitting() {
+  const fitting = createFitting();
+  state.store.fittings.push(fitting);
+  state.current = fitting;
+  state.view = 'record';
+  persistStore();
+  render();
+}
+
+function openFitting(id) {
+  state.current = state.store.fittings.find((f) => f.id === id) || null;
+  state.view = 'record';
+  render();
+}
+
+// 매장명/방문일은 다음 기록에 자동 승계된다 (같은 매장에서 연속으로 여러 벌을 보므로, SPEC.md §6.2)
+function backToList() {
+  if (state.current) {
+    state.lastShopName = state.current.shopName;
+    state.lastVisitedAt = state.current.visitedAt;
+  }
+  state.current = null;
+  state.view = 'list';
+  persistStore();
+  render();
+}
+
+function deleteFitting(id) {
+  state.store.fittings = state.store.fittings.filter((f) => f.id !== id);
+  state.deleteMenuId = null;
+  persistStore();
+  render();
+}
+
+// 텍스트/숫자 입력은 render()를 부르지 않는다 — innerHTML로 다시 그리면 입력 중이던
+// 포커스/커서 위치가 날아가버리기 때문. 칩 선택처럼 눈에 보이는 구조가 바뀌는
+// 변경만 render()를 호출한다
+function updateCurrentField(key, value) {
+  state.current[key] = value;
+  scheduleSave();
+}
+
+function updateSketchField(key, value) {
+  state.current.sketch[key] = value;
+  scheduleSave();
+  render();
+}
+
+function updateCustomText(category, value) {
+  state.current.sketch.custom[category] = value;
+  scheduleSave();
+}
+
+// ── 렌더 ────────────────────────────────────────────────────────────────
+function render() {
+  const app = document.getElementById('app');
+  app.innerHTML = '';
+  if (state.view === 'record' && state.current) {
+    app.appendChild(buildRecordScreen());
+  } else {
+    app.appendChild(buildListScreen());
+  }
+}
+
+function buildPreviewSvg(sketch) {
+  return buildFullDressSvg(
+    sketch.silhouette, sketch.neckline, sketch.sleeve,
+    sketch.skirtTexture, sketch.bodiceTexture, sketch.sleeveTexture,
+  );
+}
+
+function buildRecordScreen() {
+  const wrap = document.createElement('div');
+  wrap.className = 'record-screen';
+
+  const topBar = document.createElement('div');
+  topBar.className = 'top-bar';
+  const backBtn = document.createElement('button');
+  backBtn.type = 'button';
+  backBtn.className = 'btn';
+  backBtn.textContent = '← 목록';
+  backBtn.setAttribute('aria-label', '목록으로 돌아가기');
+  backBtn.addEventListener('click', backToList);
+  topBar.appendChild(backBtn);
+  wrap.appendChild(topBar);
+
+  const preview = document.createElement('div');
+  preview.className = 'preview-pane';
+  preview.appendChild(buildPreviewSvg(state.current.sketch));
+  wrap.appendChild(preview);
+
+  const scroll = document.createElement('div');
+  scroll.className = 'scroll-pane';
+  scroll.appendChild(buildShopFields());
+  scroll.appendChild(buildDressInfoFields());
+  scroll.appendChild(buildSketchSections());
+  scroll.appendChild(buildNotesSections());
+  wrap.appendChild(scroll);
+
+  return wrap;
+}
+
+function buildTextField(labelText, value, onInput, type) {
+  const group = document.createElement('div');
+  group.className = 'field-group';
+  const label = document.createElement('label');
+  label.textContent = labelText;
+  group.appendChild(label);
+  const input = document.createElement('input');
+  input.type = type || 'text';
+  input.value = value === null || value === undefined ? '' : value;
+  input.addEventListener('input', (e) => onInput(e.target.value));
+  group.appendChild(input);
+  return group;
+}
+
+function buildShopFields() {
+  const row = document.createElement('div');
+  row.className = 'field-row';
+  row.appendChild(buildTextField('매장명', state.current.shopName, (v) => updateCurrentField('shopName', v)));
+  row.appendChild(buildTextField('방문일', state.current.visitedAt, (v) => updateCurrentField('visitedAt', v), 'date'));
+  return row;
+}
+
+function buildDressInfoFields() {
+  const wrap = document.createElement('div');
+  const row = document.createElement('div');
+  row.className = 'field-row';
+  row.appendChild(buildTextField('드레스명(선택)', state.current.dressName, (v) => updateCurrentField('dressName', v)));
+  row.appendChild(buildTextField(
+    '가격(원, 선택)', state.current.priceKrw,
+    (v) => updateCurrentField('priceKrw', v === '' ? null : Number(v)),
+    'number',
+  ));
+  wrap.appendChild(row);
+  wrap.appendChild(buildRatingField());
+  return wrap;
+}
+
+function buildRatingField() {
+  const group = document.createElement('div');
+  group.className = 'field-group';
+  const label = document.createElement('label');
+  label.textContent = '별점';
+  group.appendChild(label);
+
+  const row = document.createElement('div');
+  row.className = 'chip-row';
+  [1, 2, 3, 4, 5].forEach((n) => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'chip text-only' + (state.current.rating === n ? ' selected' : '');
+    chip.textContent = '★'.repeat(n);
+    chip.setAttribute('aria-label', `별점 ${n}`);
+    chip.addEventListener('click', () => {
+      updateCurrentField('rating', state.current.rating === n ? null : n);
+      render();
+    });
+    row.appendChild(chip);
+  });
+  group.appendChild(row);
+  return group;
+}
+
+// 칩 한 분류(실루엣/넥라인/소매/텍스처/허리라인/뒷모습/트레인) 공용 렌더러.
+// thumbFn이 없으면 텍스트만 있는 칩(허리라인/뒷모습/트레인)으로 그린다
+function buildChipSection(title, order, currentValue, labelMap, onSelect, thumbFn, customValue, onCustomInput) {
+  const wrap = document.createElement('div');
+  const heading = document.createElement('div');
+  heading.className = 'section-title';
+  heading.textContent = title;
+  wrap.appendChild(heading);
+
+  const row = document.createElement('div');
+  row.className = 'chip-row';
+  order.forEach((id) => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'chip' + (thumbFn ? '' : ' text-only') + (id === currentValue ? ' selected' : '');
+    chip.setAttribute('aria-label', labelMap[id]);
+    if (thumbFn) chip.appendChild(thumbFn(id));
+    const label = document.createElement('span');
+    label.className = 'chip-label';
+    label.textContent = labelMap[id];
+    chip.appendChild(label);
+    chip.addEventListener('click', () => onSelect(id));
+    row.appendChild(chip);
+  });
+  wrap.appendChild(row);
+
+  if (currentValue === 'other') {
+    const inputWrap = document.createElement('div');
+    inputWrap.className = 'other-input-wrap';
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = '직접 입력';
+    input.value = customValue || '';
+    input.addEventListener('input', (e) => onCustomInput(e.target.value));
+    inputWrap.appendChild(input);
+    wrap.appendChild(inputWrap);
+  }
+
+  return wrap;
+}
+
+// 시각 파츠(실루엣/넥라인/소매)는 §3.5 크롭 규칙을 그대로 쓴다
+const VISUAL_CATEGORIES = [
+  {
+    key: 'silhouette', order: SILHOUETTE_ORDER, title: '실루엣',
+    thumb: (id) => buildFullDressSvg(id, 'sweetheart', 'none', 'satin', 'satin', 'satin'),
+  },
+  {
+    key: 'neckline', order: NECKLINE_ORDER, title: '넥라인',
+    thumb: (id) => {
+      const svg = buildFullDressSvg('aline', id, 'none', 'satin', 'satin', 'satin');
+      svg.setAttribute('viewBox', '120 80 160 130');
+      return svg;
+    },
+  },
+  {
+    key: 'sleeve', order: SLEEVE_ORDER, title: '소매',
+    thumb: (id) => {
+      const svg = buildFullDressSvg('aline', 'v', id, 'satin', 'satin', 'satin');
+      svg.setAttribute('viewBox', '100 100 200 200');
+      return svg;
+    },
+  },
+];
+const TEXTURE_CATEGORIES = [
+  { key: 'skirtTexture', title: '스커트 텍스처' },
+  { key: 'bodiceTexture', title: '보디스 텍스처' },
+  { key: 'sleeveTexture', title: '소매 텍스처' },
+];
+// waist/back/train은 그림에 반영하지 않고 속성으로만 기록한다 (back은 SPEC.md §10 참고)
+const ATTR_CATEGORIES = [
+  { key: 'waist', order: WAIST_ORDER, title: '허리 라인' },
+  { key: 'back', order: BACK_ORDER, title: '뒷모습' },
+  { key: 'train', order: TRAIN_ORDER, title: '트레인' },
+];
+
+function buildSketchSections() {
+  const wrap = document.createElement('div');
+  const sketch = state.current.sketch;
+
+  VISUAL_CATEGORIES.forEach(({ key, order, title, thumb }) => {
+    wrap.appendChild(buildChipSection(
+      title, order, sketch[key], LABEL.ko[key],
+      (id) => updateSketchField(key, id), thumb,
+      sketch.custom[key], (v) => updateCustomText(key, v),
+    ));
+  });
+
+  TEXTURE_CATEGORIES.forEach(({ key, title }) => {
+    wrap.appendChild(buildChipSection(
+      title, TEXTURE_ORDER, sketch[key], LABEL.ko.texture,
+      (id) => updateSketchField(key, id), buildTextureSwatch,
+      sketch.custom[key], (v) => updateCustomText(key, v),
+    ));
+  });
+
+  ATTR_CATEGORIES.forEach(({ key, order, title }) => {
+    wrap.appendChild(buildChipSection(
+      title, order, sketch[key], LABEL.ko[key],
+      (id) => updateSketchField(key, id), null,
+      sketch.custom[key], (v) => updateCustomText(key, v),
+    ));
+  });
+
+  return wrap;
+}
+
+// 매장에서는 대개 건너뛰는 항목이라 접어둔다 (SPEC.md §6.2)
+function buildCollapsibleField(key, title, value, onInput) {
+  const wrap = document.createElement('div');
+  const header = document.createElement('div');
+  header.className = 'collapsible-header';
+  const arrow = state.uiCollapsed[key] ? '▸' : '▾';
+  header.textContent = `${title} ${arrow}`;
+  header.addEventListener('click', () => {
+    state.uiCollapsed[key] = !state.uiCollapsed[key];
+    render();
+  });
+  wrap.appendChild(header);
+
+  if (!state.uiCollapsed[key]) {
+    const textarea = document.createElement('textarea');
+    textarea.value = value || '';
+    textarea.addEventListener('input', (e) => onInput(e.target.value));
+    wrap.appendChild(textarea);
+  }
+  return wrap;
+}
+
+function buildNotesSections() {
+  const wrap = document.createElement('div');
+  wrap.appendChild(buildCollapsibleField('fitNote', '착용감', state.current.fitNote, (v) => updateCurrentField('fitNote', v)));
+  wrap.appendChild(buildCollapsibleField('memo', '메모', state.current.memo, (v) => updateCurrentField('memo', v)));
+  return wrap;
+}
+
+// ── 목록 화면 ──────────────────────────────────────────────────────────────
+function buildListScreen() {
+  const wrap = document.createElement('div');
+  wrap.className = 'list-screen';
+  wrap.appendChild(buildListTopBar());
+
+  if (state.store.fittings.length === 0) {
+    wrap.appendChild(buildEmptyState());
+    return wrap;
+  }
+
+  const note = document.createElement('p');
+  note.className = 'backup-note';
+  note.textContent = '투어 다녀온 날엔 아래 JSON 내보내기로 백업해두세요.';
+  wrap.appendChild(note);
+
+  wrap.appendChild(buildGroupedList());
+  wrap.appendChild(buildBackupRow());
+  return wrap;
+}
+
+function buildListTopBar() {
+  const topBar = document.createElement('div');
+  topBar.className = 'top-bar';
+  const title = document.createElement('span');
+  title.className = 'title';
+  title.textContent = '내 드레스 목록';
+  topBar.appendChild(title);
+  const newBtn = document.createElement('button');
+  newBtn.type = 'button';
+  newBtn.className = 'btn primary';
+  newBtn.textContent = '+ 새 기록';
+  newBtn.addEventListener('click', startNewFitting);
+  topBar.appendChild(newBtn);
+  return topBar;
+}
+
+function buildEmptyState() {
+  const wrap = document.createElement('div');
+  wrap.className = 'empty-state';
+  const p1 = document.createElement('p');
+  p1.textContent = '아직 기록한 드레스가 없어요.';
+  const p2 = document.createElement('p');
+  p2.textContent = '위의 "+ 새 기록"으로 첫 드레스를 기록해보세요.';
+  wrap.appendChild(p1);
+  wrap.appendChild(p2);
+  return wrap;
+}
+
+function groupByShop(fittings) {
+  const groups = [];
+  const index = {};
+  fittings.forEach((f) => {
+    const key = f.shopName || '(매장명 없음)';
+    if (!(key in index)) {
+      index[key] = groups.length;
+      groups.push({ shopName: key, items: [] });
+    }
+    groups[index[key]].items.push(f);
+  });
+  return groups;
+}
+
+function buildGroupedList() {
+  const wrap = document.createElement('div');
+  groupByShop(state.store.fittings).forEach((group) => {
+    const title = document.createElement('div');
+    title.className = 'shop-group-title';
+    title.textContent = group.shopName;
+    wrap.appendChild(title);
+    group.items.forEach((fitting) => wrap.appendChild(buildFittingItem(fitting)));
+  });
+  return wrap;
+}
+
+function buildFittingItem(fitting) {
+  const item = document.createElement('div');
+  item.className = 'fitting-item';
+  item.appendChild(buildPreviewSvg(fitting.sketch));
+
+  const meta = document.createElement('div');
+  meta.className = 'fitting-meta';
+  const name = document.createElement('div');
+  name.className = 'name';
+  name.textContent = fitting.dressName || '(이름 없음)';
+  meta.appendChild(name);
+  const stars = document.createElement('div');
+  stars.className = 'stars';
+  stars.textContent = fitting.rating ? '★'.repeat(fitting.rating) : '';
+  meta.appendChild(stars);
+  item.appendChild(meta);
+
+  if (state.deleteMenuId === fitting.id) {
+    item.appendChild(buildDeleteMenu(fitting.id));
+  } else {
+    attachLongPress(item, () => {
+      state.deleteMenuId = fitting.id;
+      render();
+    });
+    item.addEventListener('click', () => openFitting(fitting.id));
+  }
+  return item;
+}
+
+// 스와이프 삭제는 오작동 위험이 있어 금지 — 길게 눌러야 삭제 메뉴가 뜬다 (SPEC.md §6.3)
+function attachLongPress(el, onLongPress) {
+  let timer = null;
+  el.addEventListener('pointerdown', () => { timer = setTimeout(onLongPress, 550); });
+  el.addEventListener('pointerup', () => clearTimeout(timer));
+  el.addEventListener('pointerleave', () => clearTimeout(timer));
+  el.addEventListener('pointercancel', () => clearTimeout(timer));
+}
+
+function buildDeleteMenu(id) {
+  const menu = document.createElement('div');
+  menu.className = 'delete-menu';
+  const del = document.createElement('button');
+  del.type = 'button';
+  del.className = 'btn';
+  del.textContent = '삭제';
+  del.addEventListener('click', (e) => { e.stopPropagation(); deleteFitting(id); });
+  const cancel = document.createElement('button');
+  cancel.type = 'button';
+  cancel.className = 'btn';
+  cancel.textContent = '취소';
+  cancel.addEventListener('click', (e) => {
+    e.stopPropagation();
+    state.deleteMenuId = null;
+    render();
+  });
+  menu.appendChild(del);
+  menu.appendChild(cancel);
+  return menu;
+}
+
+// ── JSON 백업 (SPEC.md §5.3) ───────────────────────────────────────────────
+function buildBackupRow() {
+  const wrap = document.createElement('div');
+  wrap.className = 'backup-row';
+
+  const exportBtn = document.createElement('button');
+  exportBtn.type = 'button';
+  exportBtn.className = 'btn';
+  exportBtn.textContent = 'JSON 내보내기';
+  exportBtn.addEventListener('click', exportJson);
+  wrap.appendChild(exportBtn);
+
+  const importLabel = document.createElement('label');
+  importLabel.className = 'btn';
+  importLabel.textContent = 'JSON 가져오기';
+  const importInput = document.createElement('input');
+  importInput.type = 'file';
+  importInput.accept = 'application/json';
+  importInput.style.display = 'none';
+  importInput.addEventListener('change', (e) => importJson(e.target.files[0]));
+  importLabel.appendChild(importInput);
+  wrap.appendChild(importLabel);
+
+  return wrap;
+}
+
+function exportJson() {
+  const blob = new Blob([JSON.stringify(state.store, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `dress-tour-${todayStr().replace(/-/g, '')}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// 기존 데이터와 병합하되 id 중복은 건너뛴다 (SPEC.md §5.3)
+function importJson(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const incoming = JSON.parse(reader.result);
+      const existingIds = new Set(state.store.fittings.map((f) => f.id));
+      const merged = (incoming.fittings || []).filter((f) => !existingIds.has(f.id));
+      state.store.fittings = state.store.fittings.concat(merged);
+      persistStore();
+      render();
+    } catch (e) {
+      alert('JSON 파일을 읽을 수 없습니다.');
+    }
+  };
+  reader.readAsText(file);
+}
+
+render();
 </script>
 </body>
 </html>
