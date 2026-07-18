@@ -10,8 +10,6 @@
     --dress-fill: #FBF8F4;
     --outline: #8A7A6D;
     --text: #4A3F36;
-    --accent: #C9A9A6;
-    --accent-dark: #A9827F;
   }
   * { box-sizing: border-box; }
   body {
@@ -104,26 +102,6 @@
   .dress-outline.other {
     stroke-dasharray: 4 3;
   }
-  .detail-accent {
-    fill: var(--accent);
-    stroke: var(--accent-dark);
-    stroke-width: 0.5;
-  }
-  .detail-bg {
-    fill: var(--bg);
-    stroke: var(--outline);
-    stroke-width: 0.5;
-  }
-  .detail-outline {
-    fill: none;
-    stroke: var(--outline);
-    stroke-width: 1;
-  }
-  .detail-line {
-    fill: none;
-    stroke: var(--accent);
-    stroke-width: 1.5;
-  }
   .detach-mark {
     stroke: var(--outline);
     stroke-width: 1;
@@ -148,9 +126,9 @@
 <p class="note">패턴 스와치. 레이스가 그물무늬로 보이면 실패 — 튤(net)과 구분되는지 확인.</p>
 <div class="debug-row" id="textureRow"></div>
 
-<h2>Phase 3 — 디테일 확인 (임시 화면)</h2>
-<p class="note">디테일 한 개씩만 켜서 확인. 실제로는 details 배열로 동시에 여러 개 선택 가능.</p>
-<div class="debug-row" id="detailRow"></div>
+<h2>Phase 3 — 스커트·보디스·소매 텍스처 독립 적용 확인 (임시 화면)</h2>
+<p class="note">skirtTexture/bodiceTexture/sleeveTexture를 각각 다르게 골라도 정상 합성되는지 확인용.</p>
+<div class="debug-row" id="perPartTextureRow"></div>
 
 <script>
 // SVG 좌표계 앵커 상수 (SPEC.md §3) — 값/이름 재배열 금지
@@ -173,7 +151,8 @@ const A = {
   hemY:       640,
 };
 
-// 한글 라벨 (Phase 3까지: 실루엣 + 넥라인 + 소매 + 텍스처 + 디테일)
+// 한글 라벨 (Phase 3까지: 실루엣 + 넥라인 + 소매 + 텍스처). texture 라벨은 skirtTexture/
+// bodiceTexture/sleeveTexture가 공유한다 (SPEC.md §4) — 디테일 카테고리는 두지 않는다
 const LABEL = {
   ko: {
     silhouette: {
@@ -192,9 +171,6 @@ const LABEL = {
       satin: '새틴', mikado: '미카도', tulle: '튤', lace: '레이스',
       organza: '오간자', beaded: '비즈', other: '기타',
     },
-    detail: {
-      belt: '벨트', bow: '리본', slit: '슬릿', pockets: '포켓', cape: '케이프', glove: '장갑',
-    },
   },
 };
 
@@ -203,7 +179,6 @@ const SILHOUETTE_ORDER = ['aline', 'ballgown', 'mermaid', 'trumpet', 'sheath', '
 const NECKLINE_ORDER = ['sweetheart', 'v', 'square', 'halter', 'offshoulder', 'bateau', 'illusion', 'straight', 'other'];
 const SLEEVE_ORDER = ['none', 'cap', 'short', 'long', 'puff', 'detachable', 'other'];
 const TEXTURE_ORDER = ['satin', 'mikado', 'tulle', 'lace', 'organza', 'beaded', 'other'];
-const DETAIL_ORDER = ['belt', 'bow', 'slit', 'pockets', 'cape', 'glove'];
 
 const silhouette = {};
 
@@ -492,67 +467,28 @@ function registerTexturePattern(svgNS, defs, textureId) {
   return `url(#${id})`;
 }
 
-// 디테일: 벨트/리본은 (합성 대상 실루엣의) 허리선 위치가 필요해 waistY를 함께 받는다.
-// 나머지는 힙/어깨/밑단처럼 실루엣에 따라 바뀌지 않는 고정 앵커만 쓴다
-const detail = {};
-detail.belt = (A, waistY) => {
-  const { waistL, waistR } = waistPointsAt(A, waistY);
-  return { d: `M ${waistL - 4} ${waistY - 7} L ${waistR + 4} ${waistY - 7} L ${waistR + 4} ${waistY + 7} L ${waistL - 4} ${waistY + 7} Z`, style: 'accent' };
-};
-detail.bow = (A, waistY) => {
-  const w = 16, h = 12;
-  return {
-    d: `M ${A.centerX} ${waistY} L ${A.centerX - w} ${waistY - h} L ${A.centerX - w} ${waistY + h} Z
-        M ${A.centerX} ${waistY} L ${A.centerX + w} ${waistY - h} L ${A.centerX + w} ${waistY + h} Z
-        M ${A.centerX - 5} ${waistY - 6} L ${A.centerX + 5} ${waistY - 6} L ${A.centerX + 5} ${waistY + 6} L ${A.centerX - 5} ${waistY + 6} Z`,
-    style: 'accent',
-  };
-};
-detail.slit = (A) => {
-  const slitX = A.centerX + 40;
-  return { d: `M ${slitX - 14} ${A.hemY} L ${A.centerX + 10} ${A.kneeY} L ${slitX + 14} ${A.hemY} Z`, style: 'bg' };
-};
-detail.pockets = (A) => {
-  const y = A.hipY + 15, w = 20, h = 26;
-  return {
-    d: `M ${A.hipL + 6} ${y} l ${w} 0 l 0 ${h} l -${w} 0 Z M ${A.hipR - 6 - w} ${y} l ${w} 0 l 0 ${h} l -${w} 0 Z`,
-    style: 'outline',
-  };
-};
-detail.cape = (A) => {
-  const capeY = A.hemY - 20;
-  return {
-    d: `M ${A.shoulderL} ${A.shoulderY} C ${A.shoulderL - 50} ${A.shoulderY + 150} ${A.shoulderL - 30} ${capeY - 80} ${A.shoulderL - 10} ${capeY}
-        M ${A.shoulderR} ${A.shoulderY} C ${A.shoulderR + 50} ${A.shoulderY + 150} ${A.shoulderR + 30} ${capeY - 80} ${A.shoulderR + 10} ${capeY}`,
-    style: 'line',
-  };
-};
-detail.glove = (A) => {
-  const y = A.hipY - 15, w = 18, h = 34;
-  return {
-    d: `M ${A.hipL - 20} ${y} l ${w} 0 l 0 ${h} l -${w} 0 Z M ${A.hipR + 2} ${y} l ${w} 0 l 0 ${h} l -${w} 0 Z`,
-    style: 'outline',
-  };
-};
-
-// 스커트+보디스+소매+텍스처+디테일까지 전부 합성한 드레스 <svg>를 반환 (Phase 3 미리보기·매트릭스 공용)
-function buildFullDressSvg(silhouetteId, necklineId, sleeveId, textureId, detailIds) {
+// 스커트+보디스+소매까지 합성한 드레스 <svg>를 반환 (Phase 3 미리보기·매트릭스 공용).
+// 스커트/보디스/소매는 각각 독립된 텍스처를 받는다 (SPEC.md §3.3, §4) — 같은 새틴이라도
+// 파츠마다 다른 텍스처를 고르면 그 경계가 보이는 게 정상이다 (좌표만 허리선에서 정확히 겹친다)
+function buildFullDressSvg(silhouetteId, necklineId, sleeveId, skirtTextureId, bodiceTextureId, sleeveTextureId) {
   const svgNS = 'http://www.w3.org/2000/svg';
   const svg = document.createElementNS(svgNS, 'svg');
   svg.setAttribute('viewBox', '0 0 400 700');
 
   const defs = document.createElementNS(svgNS, 'defs');
   svg.appendChild(defs);
-  const fillUrl = registerTexturePattern(svgNS, defs, textureId);
 
   const { d: skirtD, waistY } = silhouette[silhouetteId](A);
   const bodiceD = buildBodice(A, necklineId, waistY);
 
   // 1. 스커트, 2. 보디스 (렌더 순서 SPEC.md §3.3)
-  [[skirtD, silhouetteId === 'other'], [bodiceD, necklineId === 'other']].forEach(([d, isOther]) => {
+  [
+    [skirtD, silhouetteId === 'other', skirtTextureId],
+    [bodiceD, necklineId === 'other', bodiceTextureId],
+  ].forEach(([d, isOther, textureId]) => {
     const p = document.createElementNS(svgNS, 'path');
     p.setAttribute('d', d);
-    p.setAttribute('fill', fillUrl);
+    p.setAttribute('fill', registerTexturePattern(svgNS, defs, textureId));
     p.setAttribute('class', 'dress-outline' + (isOther ? ' other' : ''));
     svg.appendChild(p);
   });
@@ -562,7 +498,7 @@ function buildFullDressSvg(silhouetteId, necklineId, sleeveId, textureId, detail
   if (sleeveD) {
     const p = document.createElementNS(svgNS, 'path');
     p.setAttribute('d', sleeveD);
-    p.setAttribute('fill', fillUrl);
+    p.setAttribute('fill', registerTexturePattern(svgNS, defs, sleeveTextureId));
     p.setAttribute('class', 'dress-outline' + (sleeveId === 'other' ? ' other' : ''));
     svg.appendChild(p);
 
@@ -579,15 +515,6 @@ function buildFullDressSvg(silhouetteId, necklineId, sleeveId, textureId, detail
       });
     }
   }
-
-  // 4. 디테일
-  detailIds.forEach((id) => {
-    const { d, style } = detail[id](A, waistY);
-    const p = document.createElementNS(svgNS, 'path');
-    p.setAttribute('d', d);
-    p.setAttribute('class', `detail-${style}`);
-    svg.appendChild(p);
-  });
 
   return svg;
 }
@@ -608,7 +535,7 @@ function appendDebugItem(container, svg, labelText) {
 function renderSleeveRow() {
   const row = document.getElementById('sleeveRow');
   SLEEVE_ORDER.forEach((id) => {
-    const svg = buildFullDressSvg('aline', 'v', id, 'satin', []);
+    const svg = buildFullDressSvg('aline', 'v', id, 'satin', 'satin', 'satin');
     svg.setAttribute('viewBox', '100 100 200 200');
     appendDebugItem(row, svg, LABEL.ko.sleeve[id]);
   });
@@ -634,13 +561,20 @@ function renderTextureRow() {
   });
 }
 
-// 디테일 확인 — 한 번에 하나씩만 켜서 각 디테일의 모양을 명확히 확인. 케이프(어깨)~슬릿(밑단)까지
-// 위치가 제각각이라 크롭하지 않고 전신을 그대로 보여준다
-function renderDetailRow() {
-  const row = document.getElementById('detailRow');
-  DETAIL_ORDER.forEach((id) => {
-    const svg = buildFullDressSvg('aline', 'sweetheart', 'none', 'satin', [id]);
-    appendDebugItem(row, svg, LABEL.ko.detail[id]);
+// 스커트/보디스/소매가 서로 다른 텍스처를 동시에 써도 정상 합성되는지 확인
+// (예: 스커트=새틴, 보디스=비즈, 소매=오간자 — 사용자가 실제로 원하는 조합)
+function renderPerPartTextureRow() {
+  const row = document.getElementById('perPartTextureRow');
+  const combos = [
+    { sleeveId: 'long', skirtTex: 'satin', bodiceTex: 'satin', sleeveTex: 'satin' },
+    { sleeveId: 'long', skirtTex: 'satin', bodiceTex: 'beaded', sleeveTex: 'organza' },
+    { sleeveId: 'cap', skirtTex: 'mikado', bodiceTex: 'lace', sleeveTex: 'lace' },
+    { sleeveId: 'none', skirtTex: 'tulle', bodiceTex: 'beaded', sleeveTex: 'satin' },
+  ];
+  combos.forEach(({ sleeveId, skirtTex, bodiceTex, sleeveTex }) => {
+    const svg = buildFullDressSvg('aline', 'v', sleeveId, skirtTex, bodiceTex, sleeveTex);
+    const label = `${LABEL.ko.texture[skirtTex]}/${LABEL.ko.texture[bodiceTex]}/${LABEL.ko.texture[sleeveTex]}`;
+    appendDebugItem(row, svg, label);
   });
 }
 
@@ -740,7 +674,7 @@ renderDebugRow();
 renderNecklineMatrix();
 renderSleeveRow();
 renderTextureRow();
-renderDetailRow();
+renderPerPartTextureRow();
 </script>
 </body>
 </html>

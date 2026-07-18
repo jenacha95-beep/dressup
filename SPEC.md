@@ -71,10 +71,11 @@ const A = {
 ```
 ### 3.1 파츠 분해 원칙
 드레스를 통짜로 그리지 않는다. **보디스(상의)와 스커트(하의)를 허리선에서 분리**한다.
-두 패스는 동일한 fill을 쓰므로 허리선에서 만나면 이음매가 보이지 않는다.
+두 패스는 **좌표가 허리선에서 정확히 겹치므로 형태상 이음매가 어긋나지 않는다.**
+(텍스처는 파츠별로 다를 수 있으므로 색/무늬 경계선은 보일 수 있다 — §3.3 참고)
 - **보디스**: 넥라인이 결정하는 윗변 + 좌우 옆선 + 허리선
 - **스커트**: 실루엣이 결정하는, 허리선에서 밑단까지의 폐곡선
-- **소매 / 디테일**: 어깨점 기준으로 별도 부착
+- **소매**: 어깨점 기준으로 별도 부착
 이 분해 덕분에 넥라인 8종 × 실루엣 6종 = 48조합이 **48개 그림 없이 14개 파츠로** 커버된다.
 ### 3.2 파츠 함수 시그니처
 ```js
@@ -89,14 +90,17 @@ sleeve[id] = (A) => ({ d: 'M...Z' })
 ```
 ### 3.3 렌더 순서 (z-index)
 ```
-1. 스커트 패스     ← 텍스처 fill 적용
-2. 보디스 패스     ← 텍스처 fill 적용
-3. 소매
-4. 디테일 (벨트, 슬릿 라인 등)
-5. 외곽선 스트로크
+1. 스커트 패스     ← skirtTexture fill 적용
+2. 보디스 패스     ← bodiceTexture fill 적용
+3. 소매           ← sleeveTexture fill 적용
+4. 외곽선 스트로크
 ```
 텍스처는 `<defs>` 안의 `<pattern>` 으로 정의하고 `fill="url(#tex-lace)"` 로 참조한다.
 텍스처마다 별도 도형을 그리지 말 것.
+**스커트/보디스/소매는 각각 독립적으로 텍스처를 고른다** (예: 스커트=새틴, 보디스=비즈, 소매=오간자).
+같은 파츠(스커트, 보디스)라도 서로 다른 텍스처를 쓸 수 있으므로 fill이 이제 자동으로 일치하지
+않는다 — 허리 이음매는 좌표가 정확히 겹치는 것만으로 보장하고, 텍스처 경계선이 보이는 것은
+정상이다(실제 드레스도 파츠마다 원단이 다르면 이음매가 보인다).
 ### 3.4 `other` 값 렌더링
 모든 분류에 `other` 값이 존재한다. 렌더링 규칙:
 - 해당 분류의 **기본값 도형을 그대로 쓰되 외곽선을 점선(`stroke-dasharray: 4 3`)으로** 바꾼다
@@ -131,17 +135,24 @@ Fitting = {
   sketch: Sketch
 }
 Sketch = {
-  silhouette: 'aline'|'ballgown'|'mermaid'|'trumpet'|'sheath'|'empire'|'other',
-  neckline:   'sweetheart'|'v'|'square'|'halter'|'offshoulder'|'bateau'|'illusion'|'straight'|'other',
-  sleeve:     'none'|'cap'|'short'|'long'|'puff'|'detachable'|'other',
-  waist:      'natural'|'drop'|'empire'|'basque'|'other',
-  back:       'vback'|'lowback'|'keyhole'|'buttons'|'illusion'|'other',
-  train:      'none'|'sweep'|'chapel'|'cathedral'|'other',
-  texture:    'satin'|'mikado'|'tulle'|'lace'|'organza'|'beaded'|'other',
-  details:    string[],  // 'belt'|'bow'|'slit'|'pockets'|'cape'|'glove'
-  custom:     { [category: string]: string }  // other 선택 시 사용자 입력. 예: { neckline: '아시메트릭' }
+  silhouette:     'aline'|'ballgown'|'mermaid'|'trumpet'|'sheath'|'empire'|'other',
+  neckline:       'sweetheart'|'v'|'square'|'halter'|'offshoulder'|'bateau'|'illusion'|'straight'|'other',
+  sleeve:         'none'|'cap'|'short'|'long'|'puff'|'detachable'|'other',
+  waist:          'natural'|'drop'|'empire'|'basque'|'other',
+  back:           'vback'|'lowback'|'keyhole'|'buttons'|'illusion'|'other',
+  train:          'none'|'sweep'|'chapel'|'cathedral'|'other',
+  skirtTexture:   'satin'|'mikado'|'tulle'|'lace'|'organza'|'beaded'|'other',
+  bodiceTexture:  'satin'|'mikado'|'tulle'|'lace'|'organza'|'beaded'|'other',
+  sleeveTexture:  'satin'|'mikado'|'tulle'|'lace'|'organza'|'beaded'|'other',
+  custom:         { [category: string]: string }  // other 선택 시 사용자 입력. 예: { neckline: '아시메트릭' }
 }
 ```
+텍스처는 스커트/보디스/소매가 **각각 독립적으로** 고른다 (예: 스커트=새틴, 보디스=비즈, 소매=오간자
+처럼 파츠마다 다른 원단을 쓸 수 있다). 세 필드 모두 같은 texture enum(satin/mikado/tulle/lace/
+organza/beaded/other)을 공유한다.
+
+디테일(벨트·리본 등 부가 장식) 카테고리는 두지 않는다 — 범위 밖.
+
 **enum 순서는 인코딩에 쓰이므로 절대 재배열하지 않는다.** 값 추가는 반드시 배열 끝에만 한다.
 **한글 라벨 매핑**은 별도 객체로 관리한다. enum 키에 한글을 쓰지 말 것.
 ```js
@@ -150,11 +161,15 @@ const LABEL = {
     silhouette: { aline: 'A라인', ballgown: '볼가운', mermaid: '머메이드',
                   trumpet: '트럼펫', sheath: '시스', empire: '엠파이어', other: '기타' },
     neckline:   { sweetheart: '스위트하트', v: 'V넥', square: '스퀘어넥', ... },
+    texture:    { satin: '새틴', mikado: '미카도', tulle: '튤', lace: '레이스',
+                  organza: '오간자', beaded: '비즈', other: '기타' },  // skirtTexture/bodiceTexture/sleeveTexture가 공유
     // ...
   }
 }
 ```
-**기본값**: 새 기록은 `aline` / `sweetheart` / `none` / `natural` / `vback` / `sweep` / `satin` / `[]` 로 시작한다. 아무것도 안 골라도 저장 가능해야 한다.
+**기본값**: 새 기록은 `aline` / `sweetheart` / `none` / `natural` / `vback` / `sweep` /
+`satin`(skirtTexture) / `satin`(bodiceTexture) / `satin`(sleeveTexture)로 시작한다.
+아무것도 안 골라도 저장 가능해야 한다.
 ---
 ## 5. 공유 (요구사항 3)
 세 가지 방식을 모두 구현한다. 우선순위는 아래 순서 그대로다.
@@ -173,12 +188,12 @@ const LABEL = {
 - 공유 전 **포함 항목 선택 다이얼로그**를 띄운다. 메모와 착용감은 개인적인 내용이므로 **기본 제외**
 #### 스케치 코드 규격
 ```
-형식: [버전1자] + [7개 분류 각 1자] + [디테일 n자]
+형식: [버전1자] + [9개 분류 각 1자]
 알파벳: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz' (62진)
-분류 순서: silhouette, neckline, sleeve, waist, back, train, texture
+분류 순서: silhouette, neckline, sleeve, waist, back, train, skirtTexture, bodiceTexture, sleeveTexture
 각 자리 = 해당 enum 배열의 인덱스를 알파벳으로 변환
-디테일 = 선택된 항목의 인덱스를 이어붙임 (없으면 생략)
-예시: "10012032" → v1 / aline / sweetheart / cap / natural / keyhole / none / mikado
+예시: "1001020154" → v1 / aline / sweetheart / cap / natural / keyhole / none /
+                     skirtTexture=mikado / bodiceTexture=beaded / sleeveTexture=organza
 ```
 - 단일 드레스 공유: `https://<host>/#d=10012032`
 - 여러 벌 공유: 배열을 압축 JSON으로 만들어 base64url 인코딩 → `#s=<base64>`
@@ -258,7 +273,8 @@ const LABEL = {
 - **완료 조건**: 48칸 중 이음매가 어긋나거나 형태가 무너진 칸이 0개
 - 여기서 시간이 가장 많이 든다. 서두르지 말 것. 이 단계를 대충 넘기면 나중에 좌표계를 다시 손봐야 한다
 ### Phase 3 — 나머지 파츠
-- 소매 6종, 텍스처 7종(`<pattern>`), 디테일 6종
+- 소매 6종, 텍스처 7종(`<pattern>`)
+- 텍스처는 스커트/보디스/소매 각각에 독립적으로 적용한다 (skirtTexture/bodiceTexture/sleeveTexture)
 - 각 분류의 미니 썸네일 크롭 함수
 - 텍스처는 미묘하게. 레이스가 그물무늬로 보이면 실패다
 ### Phase 4 — 기록·저장·목록
