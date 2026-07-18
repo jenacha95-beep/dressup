@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>웨딩드레스 투어 기록</title>
+<style>
+  :root {
+    --bg: #EDE7E0;
+    --dress-fill: #FBF8F4;
+    --outline: #8A7A6D;
+    --text: #4A3F36;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Malgun Gothic", sans-serif;
+  }
+  h1 {
+    font-size: 15px;
+    font-weight: 600;
+    text-align: center;
+    padding: 16px 0 4px;
+    margin: 0;
+  }
+  p.note {
+    text-align: center;
+    font-size: 12px;
+    opacity: 0.7;
+    margin: 0 0 12px;
+  }
+  .debug-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    padding: 8px 12px 24px;
+  }
+  .debug-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .debug-item svg {
+    width: 110px;
+    height: auto;
+    background: var(--bg);
+  }
+  .debug-item span {
+    font-size: 12px;
+    margin-top: 4px;
+  }
+  .dress-shape {
+    fill: var(--dress-fill);
+    stroke: var(--outline);
+    stroke-width: 1;
+  }
+  .dress-shape.other {
+    stroke-dasharray: 4 3;
+  }
+  .waist-guide {
+    stroke: var(--outline);
+    stroke-width: 0.5;
+    stroke-dasharray: 2 2;
+    opacity: 0.5;
+  }
+</style>
+</head>
+<body>
+<h1>Phase 1 — 실루엣 확인 (임시 화면)</h1>
+<p class="note">6종이 서로 구분되고 모두 자기 허리선에서 시작하는지 확인용. Phase 4에서 실제 화면으로 교체됩니다.</p>
+<div class="debug-row" id="debugRow"></div>
+
+<script>
+// SVG 좌표계 앵커 상수 (SPEC.md §3) — 값/이름 재배열 금지
+const A = {
+  centerX: 200,
+  neckY:      105,
+  shoulderY:  120,
+  shoulderL:  140,
+  shoulderR:  260,
+  bustY:      180,
+  bustL:      158,
+  bustR:      242,
+  waistY:     280,
+  waistL:     168,
+  waistR:     232,
+  hipY:       340,
+  hipL:       155,
+  hipR:       245,
+  kneeY:      500,
+  hemY:       640,
+};
+
+// 한글 라벨 (Phase 1은 실루엣 분류만 채운다)
+const LABEL = {
+  ko: {
+    silhouette: {
+      aline: 'A라인', ballgown: '볼가운', mermaid: '머메이드',
+      trumpet: '트럼펫', sheath: '시스', empire: '엠파이어', other: '기타',
+    },
+  },
+};
+
+// enum 순서는 URL 인코딩에 쓰이므로 재배열 금지 (SPEC.md §4)
+const SILHOUETTE_ORDER = ['aline', 'ballgown', 'mermaid', 'trumpet', 'sheath', 'empire', 'other'];
+
+const silhouette = {};
+
+// 골반까지 직선으로 내려가다 완만한 곡선으로 벌어지는 기본 실루엣
+silhouette.aline = (A) => {
+  const hemHalf = (A.hipR - A.centerX) + 100;
+  const hemL = A.centerX - hemHalf, hemR = A.centerX + hemHalf;
+  return {
+    waistY: A.waistY,
+    d: `M ${A.waistL} ${A.waistY}
+        L ${A.hipL} ${A.hipY}
+        C ${A.hipL - 15} ${A.hipY + (A.hemY - A.hipY) * 0.35} ${hemL - 10} ${A.hemY - (A.hemY - A.hipY) * 0.35} ${hemL} ${A.hemY}
+        L ${hemR} ${A.hemY}
+        C ${hemR + 10} ${A.hemY - (A.hemY - A.hipY) * 0.35} ${A.hipR + 15} ${A.hipY + (A.hemY - A.hipY) * 0.35} ${A.hipR} ${A.hipY}
+        L ${A.waistR} ${A.waistY} Z`,
+  };
+};
+
+// 허리에서 밑단까지 하나의 긴 곡선으로 볼록하게 부풀리는, 6종 중 가장 넓은 실루엣
+silhouette.ballgown = (A) => {
+  const hemHalf = (A.hipR - A.centerX) + 145;
+  const hemL = A.centerX - hemHalf, hemR = A.centerX + hemHalf;
+  return {
+    waistY: A.waistY,
+    d: `M ${A.waistL} ${A.waistY}
+        C ${A.waistL - 5} ${A.waistY + (A.hemY - A.waistY) * 0.25} ${hemL - 60} ${A.hemY - (A.hemY - A.waistY) * 0.15} ${hemL} ${A.hemY}
+        L ${hemR} ${A.hemY}
+        C ${hemR + 60} ${A.hemY - (A.hemY - A.waistY) * 0.15} ${A.waistR + 5} ${A.waistY + (A.hemY - A.waistY) * 0.25} ${A.waistR} ${A.waistY} Z`,
+  };
+};
+
+// 무릎까지 몸에 붙어 내려가다 무릎 아래에서만 급격히 벌어지는 실루엣
+silhouette.mermaid = (A) => {
+  const kneeHalf = (A.hipR - A.centerX) - 15;
+  const kneeL = A.centerX - kneeHalf, kneeR = A.centerX + kneeHalf;
+  const hemHalf = (A.hipR - A.centerX) + 125;
+  const hemL = A.centerX - hemHalf, hemR = A.centerX + hemHalf;
+  return {
+    waistY: A.waistY,
+    d: `M ${A.waistL} ${A.waistY}
+        C ${A.waistL - 8} ${A.waistY + (A.hipY - A.waistY) * 0.5} ${A.hipL} ${A.hipY - (A.hipY - A.waistY) * 0.1} ${A.hipL} ${A.hipY}
+        L ${kneeL} ${A.kneeY}
+        C ${kneeL - 10} ${A.kneeY + (A.hemY - A.kneeY) * 0.3} ${hemL - 40} ${A.hemY - (A.hemY - A.kneeY) * 0.4} ${hemL} ${A.hemY}
+        L ${hemR} ${A.hemY}
+        C ${hemR + 40} ${A.hemY - (A.hemY - A.kneeY) * 0.4} ${kneeR + 10} ${A.kneeY + (A.hemY - A.kneeY) * 0.3} ${kneeR} ${A.kneeY}
+        L ${A.hipR} ${A.hipY}
+        C ${A.hipR} ${A.hipY - (A.hipY - A.waistY) * 0.1} ${A.waistR + 8} ${A.waistY + (A.hipY - A.waistY) * 0.5} ${A.waistR} ${A.waistY} Z`,
+  };
+};
+
+// 골반까지는 머메이드처럼 몸에 붙어 내려가다, 무릎 못미쳐부터 직선 콘(원뿔) 모양으로 곧게 벌어지는 실루엣
+// 머메이드(무릎까지 좁아졌다가 급격한 곡선 킥)와도, 아라인(엉덩이부터 바로 곡선 플레어)과도 다른
+// 형태여야 하므로 플레어 구간을 곡선이 아닌 직선으로 그려 "트럼펫 벨" 특유의 각진 콘 실루엣을 만든다
+silhouette.trumpet = (A) => {
+  const flareStartY = A.hipY + (A.kneeY - A.hipY) * 0.5;
+  const flareHalf = (A.hipR - A.centerX) - 5;
+  const flareStartL = A.centerX - flareHalf, flareStartR = A.centerX + flareHalf;
+  const hemHalf = (A.hipR - A.centerX) + 115;
+  const hemL = A.centerX - hemHalf, hemR = A.centerX + hemHalf;
+  return {
+    waistY: A.waistY,
+    d: `M ${A.waistL} ${A.waistY}
+        C ${A.waistL - 8} ${A.waistY + (A.hipY - A.waistY) * 0.5} ${A.hipL} ${A.hipY - (A.hipY - A.waistY) * 0.1} ${A.hipL} ${A.hipY}
+        L ${flareStartL} ${flareStartY}
+        L ${hemL} ${A.hemY}
+        L ${hemR} ${A.hemY}
+        L ${flareStartR} ${flareStartY}
+        L ${A.hipR} ${A.hipY}
+        C ${A.hipR} ${A.hipY - (A.hipY - A.waistY) * 0.1} ${A.waistR + 8} ${A.waistY + (A.hipY - A.waistY) * 0.5} ${A.waistR} ${A.waistY} Z`,
+  };
+};
+
+// 곡선 없이 직선으로만 이어지는, 가장 좁고 몸에 붙는 실루엣
+silhouette.sheath = (A) => {
+  const hemHalf = (A.hipR - A.centerX) + 8;
+  const hemL = A.centerX - hemHalf, hemR = A.centerX + hemHalf;
+  return {
+    waistY: A.waistY,
+    d: `M ${A.waistL} ${A.waistY}
+        L ${A.hipL} ${A.hipY}
+        L ${hemL} ${A.hemY}
+        L ${hemR} ${A.hemY}
+        L ${A.hipR} ${A.hipY}
+        L ${A.waistR} ${A.waistY} Z`,
+  };
+};
+
+// 유일하게 waistY 자체를 가슴 바로 아래로 올리는 실루엣 — 봉제선 위치가 다르다
+silhouette.empire = (A) => {
+  const waistY = A.bustY + (A.waistY - A.bustY) * 0.3;
+  const bustHalf = A.bustR - A.centerX;
+  const waistHalf = A.waistR - A.centerX;
+  const empireHalf = bustHalf - (bustHalf - waistHalf) * 0.3;
+  const waistL = A.centerX - empireHalf, waistR = A.centerX + empireHalf;
+  const hemHalf = (A.hipR - A.centerX) + 90;
+  const hemL = A.centerX - hemHalf, hemR = A.centerX + hemHalf;
+  return {
+    waistY,
+    d: `M ${waistL} ${waistY}
+        C ${waistL - 5} ${waistY + (A.hemY - waistY) * 0.3} ${hemL - 20} ${A.hemY - (A.hemY - waistY) * 0.3} ${hemL} ${A.hemY}
+        L ${hemR} ${A.hemY}
+        C ${hemR + 20} ${A.hemY - (A.hemY - waistY) * 0.3} ${waistR + 5} ${waistY + (A.hemY - waistY) * 0.3} ${waistR} ${waistY} Z`,
+  };
+};
+
+// 새 도형을 그리지 않고 기본값(aline)을 재사용한다. 점선 처리는 렌더러가 담당 (SPEC.md §3.4)
+silhouette.other = silhouette.aline;
+
+// Phase 1 임시 확인 페이지 — 6종이 서로 구분되고 자기 허리선에서 시작하는지 검증용
+function renderDebugRow() {
+  const row = document.getElementById('debugRow');
+  const svgNS = 'http://www.w3.org/2000/svg';
+
+  SILHOUETTE_ORDER.forEach((id) => {
+    const { d, waistY } = silhouette[id](A);
+
+    const svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('viewBox', '0 0 400 700');
+
+    const guide = document.createElementNS(svgNS, 'line');
+    guide.setAttribute('x1', '0');
+    guide.setAttribute('x2', '400');
+    guide.setAttribute('y1', waistY);
+    guide.setAttribute('y2', waistY);
+    guide.setAttribute('class', 'waist-guide');
+    svg.appendChild(guide);
+
+    const path = document.createElementNS(svgNS, 'path');
+    path.setAttribute('d', d);
+    path.setAttribute('class', 'dress-shape' + (id === 'other' ? ' other' : ''));
+    svg.appendChild(path);
+
+    const item = document.createElement('div');
+    item.className = 'debug-item';
+    item.appendChild(svg);
+
+    const label = document.createElement('span');
+    label.textContent = LABEL.ko.silhouette[id];
+    item.appendChild(label);
+
+    row.appendChild(item);
+  });
+}
+
+renderDebugRow();
+</script>
+</body>
+</html>
