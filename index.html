@@ -66,12 +66,45 @@
     stroke-dasharray: 2 2;
     opacity: 0.5;
   }
+  h2 {
+    font-size: 15px;
+    font-weight: 600;
+    text-align: center;
+    padding: 24px 0 4px;
+    margin: 0;
+  }
+  .matrix {
+    display: grid;
+    gap: 2px;
+    padding: 8px 12px 32px;
+    justify-content: center;
+  }
+  .matrix .cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #fff2;
+  }
+  .matrix .cell.header {
+    font-size: 10px;
+    justify-content: center;
+    text-align: center;
+    padding: 2px;
+  }
+  .matrix .cell svg {
+    width: 60px;
+    height: auto;
+  }
 </style>
 </head>
 <body>
 <h1>Phase 1 — 실루엣 확인 (임시 화면)</h1>
 <p class="note">6종이 서로 구분되고 모두 자기 허리선에서 시작하는지 확인용. Phase 4에서 실제 화면으로 교체됩니다.</p>
 <div class="debug-row" id="debugRow"></div>
+
+<h2>Phase 2 — 넥라인 × 실루엣 합성 확인 (임시 화면)</h2>
+<p class="note">6×8=48조합 중 이음매가 어긋나거나 형태가 무너진 칸이 있는지 확인용. Phase 4에서 실제 화면으로 교체됩니다.</p>
+<div class="matrix" id="necklineMatrix"></div>
 
 <script>
 // SVG 좌표계 앵커 상수 (SPEC.md §3) — 값/이름 재배열 금지
@@ -94,18 +127,23 @@ const A = {
   hemY:       640,
 };
 
-// 한글 라벨 (Phase 1은 실루엣 분류만 채운다)
+// 한글 라벨 (Phase 2까지: 실루엣 + 넥라인)
 const LABEL = {
   ko: {
     silhouette: {
       aline: 'A라인', ballgown: '볼가운', mermaid: '머메이드',
       trumpet: '트럼펫', sheath: '시스', empire: '엠파이어', other: '기타',
     },
+    neckline: {
+      sweetheart: '스위트하트', v: 'V넥', square: '스퀘어넥', halter: '홀터넥',
+      offshoulder: '오프숄더', bateau: '보트넥', illusion: '일루전', straight: '스트레이트', other: '기타',
+    },
   },
 };
 
 // enum 순서는 URL 인코딩에 쓰이므로 재배열 금지 (SPEC.md §4)
 const SILHOUETTE_ORDER = ['aline', 'ballgown', 'mermaid', 'trumpet', 'sheath', 'empire', 'other'];
+const NECKLINE_ORDER = ['sweetheart', 'v', 'square', 'halter', 'offshoulder', 'bateau', 'illusion', 'straight', 'other'];
 
 const silhouette = {};
 
@@ -214,6 +252,134 @@ silhouette.empire = (A) => {
 // 새 도형을 그리지 않고 기본값(aline)을 재사용한다. 점선 처리는 렌더러가 담당 (SPEC.md §3.4)
 silhouette.other = silhouette.aline;
 
+// 넥라인: 보디스 윗변만 그리는 열린 path (좌측 시작점 → 우측 끝점). strapless면 가슴선에서,
+// 아니면 어깨점에서 시작/종료한다 — 이 시작/끝점이 곧 좌우 옆선이 이어붙는 지점이다 (SPEC.md §3.2)
+const neckline = {};
+
+// 볼록한 두 봉우리 사이 정중앙이 가장 깊게 파이는, 스트랩 없는 하트형 넥라인 (기본값)
+neckline.sweetheart = (A) => {
+  const peakY = A.bustY - 30;
+  const dipY = A.bustY + 12;
+  return {
+    strapless: true,
+    d: `M ${A.bustL} ${A.bustY}
+        C ${A.bustL} ${peakY} ${A.centerX - 30} ${peakY} ${A.centerX} ${dipY}
+        C ${A.centerX + 30} ${peakY} ${A.bustR} ${peakY} ${A.bustR} ${A.bustY}`,
+  };
+};
+
+// 어깨점에서 시작해 정중앙에서 뾰족하게 파이는 V자 넥라인
+neckline.v = (A) => {
+  const vDepth = A.bustY + 20;
+  return {
+    strapless: false,
+    d: `M ${A.shoulderL} ${A.shoulderY}
+        L ${A.centerX} ${vDepth}
+        L ${A.shoulderR} ${A.shoulderY}`,
+  };
+};
+
+// 어깨점에서 시작해 각진 사각형 모양으로 파이는 넥라인
+neckline.square = (A) => {
+  const notchL = A.centerX - 45, notchR = A.centerX + 45;
+  const notchY = A.bustY - 10;
+  return {
+    strapless: false,
+    d: `M ${A.shoulderL} ${A.shoulderY}
+        L ${notchL} ${A.shoulderY}
+        L ${notchL} ${notchY}
+        L ${notchR} ${notchY}
+        L ${notchR} ${A.shoulderY}
+        L ${A.shoulderR} ${A.shoulderY}`,
+  };
+};
+
+// 가슴선에서 시작해(어깨는 드러남) 목 가까이 높고 좁은 지점까지 끈이 올라가는 넥라인
+neckline.halter = (A) => {
+  const peakY = A.neckY + 8;
+  return {
+    strapless: true,
+    d: `M ${A.bustL} ${A.bustY}
+        L ${A.centerX - 22} ${A.bustY - 15}
+        L ${A.centerX} ${peakY}
+        L ${A.centerX + 22} ${A.bustY - 15}
+        L ${A.bustR} ${A.bustY}`,
+  };
+};
+
+// 가슴선 위쪽에서 완만하게 휘는, 어깨가 드러나는 수평에 가까운 넥라인
+neckline.offshoulder = (A) => {
+  const offY = A.bustY - 15;
+  return {
+    strapless: true,
+    d: `M ${A.bustL} ${offY}
+        Q ${A.centerX} ${offY - 6} ${A.bustR} ${offY}`,
+  };
+};
+
+// 어깨점을 넓고 얕게 잇는, 쇄골선을 따라가는 보트넥
+neckline.bateau = (A) => {
+  return {
+    strapless: false,
+    d: `M ${A.shoulderL} ${A.shoulderY}
+        Q ${A.centerX} ${A.shoulderY + 12} ${A.shoulderR} ${A.shoulderY}`,
+  };
+};
+
+// 어깨점에서 목 가까이까지 높게 차오르는, 비침 소재 패널을 암시하는 넥라인
+neckline.illusion = (A) => {
+  return {
+    strapless: false,
+    d: `M ${A.shoulderL} ${A.shoulderY}
+        Q ${A.centerX} ${A.neckY} ${A.shoulderR} ${A.shoulderY}`,
+  };
+};
+
+// 곡선 없이 가슴선을 그대로 가로지르는, 가장 단순한 일자 넥라인
+neckline.straight = (A) => {
+  return {
+    strapless: true,
+    d: `M ${A.bustL} ${A.bustY} L ${A.bustR} ${A.bustY}`,
+  };
+};
+
+// 새 도형을 그리지 않고 기본값(sweetheart)을 재사용한다 (SPEC.md §3.4, §4 기본값)
+neckline.other = neckline.sweetheart;
+
+// 실루엣이 쓰는 waistY가 기본 허리선(A.waistY)이 아닐 때(엠파이어처럼 가슴 아래로 올라간 경우)
+// 가슴선~기본 허리선 사이를 보간해 그 높이에서의 좌우 폭을 구한다. waistY가 A.waistY면 그대로 A.waistL/R
+function waistPointsAt(A, waistY) {
+  const t = (waistY - A.bustY) / (A.waistY - A.bustY);
+  const bustHalf = A.bustR - A.centerX;
+  const waistHalf = A.waistR - A.centerX;
+  const half = bustHalf - (bustHalf - waistHalf) * t;
+  return { waistL: A.centerX - half, waistR: A.centerX + half };
+}
+
+// 넥라인 path의 앞머리 "M x y" 명령만 제거해, 옆선이 그 좌표에 도착한 다음 이어그릴 수 있게 한다
+function stripMove(d) {
+  return d.replace(/^\s*M\s*[-\d.]+\s+[-\d.]+/, '');
+}
+
+// 보디스 = 넥라인이 정하는 윗변 + 좌우 옆선 + (실루엣이 쓰는) 허리선. 스커트와 fill이 같아 이음매가 안 보인다
+function buildBodice(A, necklineId, waistY) {
+  const { waistL, waistR } = waistPointsAt(A, waistY);
+  const { d: necklineD, strapless } = neckline[necklineId](A);
+  const necklineRest = stripMove(necklineD);
+
+  if (strapless) {
+    return `M ${waistL} ${waistY}
+        Q ${A.bustL - 4} ${A.bustY + (waistY - A.bustY) * 0.5} ${A.bustL} ${A.bustY}
+        ${necklineRest}
+        Q ${A.bustR + 4} ${A.bustY + (waistY - A.bustY) * 0.5} ${waistR} ${waistY} Z`;
+  }
+
+  return `M ${waistL} ${waistY}
+      C ${waistL} ${A.bustY} ${A.bustL} ${A.shoulderY + (A.bustY - A.shoulderY) * 0.5} ${A.shoulderL} ${A.shoulderY}
+      ${necklineRest}
+      C ${A.bustR} ${A.shoulderY + (A.bustY - A.shoulderY) * 0.5} ${waistR} ${A.bustY} ${waistR} ${waistY} Z`;
+}
+
 // Phase 1 임시 확인 페이지 — 6종이 서로 구분되고 자기 허리선에서 시작하는지 검증용
 function renderDebugRow() {
   const row = document.getElementById('debugRow');
@@ -250,7 +416,64 @@ function renderDebugRow() {
   });
 }
 
+// 스커트+보디스를 합성한 드레스 하나를 그린 <svg> 엘리먼트를 반환 (미리보기·매트릭스·썸네일에서 공용)
+function buildDressSvg(silhouetteId, necklineId) {
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const { d: skirtD, waistY } = silhouette[silhouetteId](A);
+  const bodiceD = buildBodice(A, necklineId, waistY);
+
+  const svg = document.createElementNS(svgNS, 'svg');
+  svg.setAttribute('viewBox', '0 0 400 700');
+
+  const skirt = document.createElementNS(svgNS, 'path');
+  skirt.setAttribute('d', skirtD);
+  skirt.setAttribute('class', 'dress-shape' + (silhouetteId === 'other' ? ' other' : ''));
+  svg.appendChild(skirt);
+
+  const bodice = document.createElementNS(svgNS, 'path');
+  bodice.setAttribute('d', bodiceD);
+  bodice.setAttribute('class', 'dress-shape' + (necklineId === 'other' ? ' other' : ''));
+  svg.appendChild(bodice);
+
+  return svg;
+}
+
+// Phase 2 디버그 매트릭스 — 6실루엣×8넥라인=48조합 전부 렌더링해 이음매/형태가 무너진 칸이 있는지 확인
+function renderNecklineMatrix() {
+  const rows = SILHOUETTE_ORDER.filter((id) => id !== 'other');
+  const cols = NECKLINE_ORDER.filter((id) => id !== 'other');
+
+  const grid = document.getElementById('necklineMatrix');
+  grid.style.gridTemplateColumns = `70px repeat(${cols.length}, 70px)`;
+
+  const corner = document.createElement('div');
+  corner.className = 'cell header';
+  grid.appendChild(corner);
+
+  cols.forEach((necklineId) => {
+    const header = document.createElement('div');
+    header.className = 'cell header';
+    header.textContent = LABEL.ko.neckline[necklineId];
+    grid.appendChild(header);
+  });
+
+  rows.forEach((silhouetteId) => {
+    const rowHeader = document.createElement('div');
+    rowHeader.className = 'cell header';
+    rowHeader.textContent = LABEL.ko.silhouette[silhouetteId];
+    grid.appendChild(rowHeader);
+
+    cols.forEach((necklineId) => {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.appendChild(buildDressSvg(silhouetteId, necklineId));
+      grid.appendChild(cell);
+    });
+  });
+}
+
 renderDebugRow();
+renderNecklineMatrix();
 </script>
 </body>
 </html>
