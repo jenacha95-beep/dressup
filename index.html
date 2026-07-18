@@ -10,6 +10,8 @@
     --dress-fill: #FBF8F4;
     --outline: #8A7A6D;
     --text: #4A3F36;
+    --accent: #C9A9A6;
+    --accent-dark: #A9827F;
   }
   * { box-sizing: border-box; }
   body {
@@ -95,6 +97,38 @@
     width: 60px;
     height: auto;
   }
+  .dress-outline {
+    stroke: var(--outline);
+    stroke-width: 1;
+  }
+  .dress-outline.other {
+    stroke-dasharray: 4 3;
+  }
+  .detail-accent {
+    fill: var(--accent);
+    stroke: var(--accent-dark);
+    stroke-width: 0.5;
+  }
+  .detail-bg {
+    fill: var(--bg);
+    stroke: var(--outline);
+    stroke-width: 0.5;
+  }
+  .detail-outline {
+    fill: none;
+    stroke: var(--outline);
+    stroke-width: 1;
+  }
+  .detail-line {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 1.5;
+  }
+  .detach-mark {
+    stroke: var(--outline);
+    stroke-width: 1;
+    stroke-dasharray: 3 2;
+  }
 </style>
 </head>
 <body>
@@ -105,6 +139,18 @@
 <h2>Phase 2 — 넥라인 × 실루엣 합성 확인 (임시 화면)</h2>
 <p class="note">6×8=48조합 중 이음매가 어긋나거나 형태가 무너진 칸이 있는지 확인용. Phase 4에서 실제 화면으로 교체됩니다.</p>
 <div class="matrix" id="necklineMatrix"></div>
+
+<h2>Phase 3 — 소매 확인 (임시 화면)</h2>
+<p class="note">칩용 크롭(viewBox 100 100 200 200)으로 미리보기. 6종 + 기타.</p>
+<div class="debug-row" id="sleeveRow"></div>
+
+<h2>Phase 3 — 텍스처 확인 (임시 화면)</h2>
+<p class="note">패턴 스와치. 레이스가 그물무늬로 보이면 실패 — 튤(net)과 구분되는지 확인.</p>
+<div class="debug-row" id="textureRow"></div>
+
+<h2>Phase 3 — 디테일 확인 (임시 화면)</h2>
+<p class="note">디테일 한 개씩만 켜서 확인. 실제로는 details 배열로 동시에 여러 개 선택 가능.</p>
+<div class="debug-row" id="detailRow"></div>
 
 <script>
 // SVG 좌표계 앵커 상수 (SPEC.md §3) — 값/이름 재배열 금지
@@ -127,7 +173,7 @@ const A = {
   hemY:       640,
 };
 
-// 한글 라벨 (Phase 2까지: 실루엣 + 넥라인)
+// 한글 라벨 (Phase 3까지: 실루엣 + 넥라인 + 소매 + 텍스처 + 디테일)
 const LABEL = {
   ko: {
     silhouette: {
@@ -138,12 +184,26 @@ const LABEL = {
       sweetheart: '스위트하트', v: 'V넥', square: '스퀘어넥', halter: '홀터넥',
       offshoulder: '오프숄더', bateau: '보트넥', illusion: '일루전', straight: '스트레이트', other: '기타',
     },
+    sleeve: {
+      none: '민소매', cap: '캡소매', short: '반팔', long: '긴소매',
+      puff: '퍼프소매', detachable: '탈부착소매', other: '기타',
+    },
+    texture: {
+      satin: '새틴', mikado: '미카도', tulle: '튤', lace: '레이스',
+      organza: '오간자', beaded: '비즈', other: '기타',
+    },
+    detail: {
+      belt: '벨트', bow: '리본', slit: '슬릿', pockets: '포켓', cape: '케이프', glove: '장갑',
+    },
   },
 };
 
 // enum 순서는 URL 인코딩에 쓰이므로 재배열 금지 (SPEC.md §4)
 const SILHOUETTE_ORDER = ['aline', 'ballgown', 'mermaid', 'trumpet', 'sheath', 'empire', 'other'];
 const NECKLINE_ORDER = ['sweetheart', 'v', 'square', 'halter', 'offshoulder', 'bateau', 'illusion', 'straight', 'other'];
+const SLEEVE_ORDER = ['none', 'cap', 'short', 'long', 'puff', 'detachable', 'other'];
+const TEXTURE_ORDER = ['satin', 'mikado', 'tulle', 'lace', 'organza', 'beaded', 'other'];
+const DETAIL_ORDER = ['belt', 'bow', 'slit', 'pockets', 'cape', 'glove'];
 
 const silhouette = {};
 
@@ -380,6 +440,210 @@ function buildBodice(A, necklineId, waistY) {
       C ${A.bustR} ${A.shoulderY + (A.bustY - A.shoulderY) * 0.5} ${waistR} ${A.bustY} ${waistR} ${waistY} Z`;
 }
 
+// 소매 한쪽(어깨점 기준)을 그리는 물방울(petal) 모양 헬퍼. side: 왼쪽=-1(shoulderL), 오른쪽=1(shoulderR)
+// reachX/reachY = 어깨점에서 소매 끝까지의 가로/세로 거리, bulge = 바깥쪽으로 부푸는 정도
+function sleevePetal(A, side, reachX, reachY, bulge) {
+  const shoulderX = side === -1 ? A.shoulderL : A.shoulderR;
+  const outX = shoulderX + side * reachX;
+  const outY = A.shoulderY + reachY;
+  return `M ${shoulderX} ${A.shoulderY}
+      C ${shoulderX + side * bulge} ${A.shoulderY + reachY * 0.25} ${outX + side * bulge * 0.4} ${outY - reachY * 0.2} ${outX} ${outY}
+      C ${outX - side * bulge * 0.3} ${outY - reachY * 0.3} ${shoulderX - side * bulge * 0.2} ${A.shoulderY + reachY * 0.45} ${shoulderX} ${A.shoulderY} Z`;
+}
+
+// 소매: 어깨점 기준 좌우 대칭 path (SPEC.md §3.2). 두 소매를 하나의 d에 서브패스로 담는다
+const sleeve = {};
+sleeve.none = () => ({ d: '' });
+sleeve.cap = (A) => ({ d: `${sleevePetal(A, -1, 15, 30, 16)} ${sleevePetal(A, 1, 15, 30, 16)}` });
+sleeve.short = (A) => ({ d: `${sleevePetal(A, -1, 8, 75, 20)} ${sleevePetal(A, 1, 8, 75, 20)}` });
+sleeve.long = (A) => ({ d: `${sleevePetal(A, -1, 4, 180, 13)} ${sleevePetal(A, 1, 4, 180, 13)}` });
+sleeve.puff = (A) => ({ d: `${sleevePetal(A, -1, 24, 42, 34)} ${sleevePetal(A, 1, 24, 42, 34)}` });
+// 긴소매와 같은 모양이되, 렌더러가 팔뚝 중간에 점선 탈부착 표시선을 추가로 그린다
+sleeve.detachable = (A) => ({ d: sleeve.long(A).d, detachMarkY: A.shoulderY + 180 * 0.5 });
+// 새 도형을 그리지 않고 기본값(none, 즉 민소매)을 재사용한다 (SPEC.md §3.4, §4 기본값)
+sleeve.other = sleeve.none;
+
+// 텍스처: <pattern> 타일로 정의해 fill="url(#...)"로 참조한다 (SPEC.md §3.3). 미묘하게 —
+// 특히 레이스는 튤(균일한 그물망)과 달리 불규칙하게 흩뿌린 작은 점으로 그려 net 무늬로 안 보이게 한다
+const TEXTURE_TILE = {
+  satin:   { size: 40, html: '<rect width="40" height="40" fill="var(--dress-fill)"/><line x1="0" y1="40" x2="40" y2="0" stroke="#00000012" stroke-width="8"/>' },
+  mikado:  { size: 20, html: '<rect width="20" height="20" fill="var(--dress-fill)"/><line x1="0" y1="0" x2="20" y2="20" stroke="#00000010" stroke-width="1"/><line x1="20" y1="0" x2="0" y2="20" stroke="#00000010" stroke-width="1"/>' },
+  tulle:   { size: 14, html: '<rect width="14" height="14" fill="var(--dress-fill)"/><path d="M0 0 L14 14 M14 0 L0 14" stroke="#00000018" stroke-width="0.6"/>' },
+  lace:    { size: 22, html: '<rect width="22" height="22" fill="var(--dress-fill)"/><circle cx="4" cy="5" r="1.2" fill="#00000022"/><circle cx="15" cy="3" r="0.8" fill="#0000001a"/><circle cx="9" cy="13" r="1.4" fill="#00000022"/><circle cx="18" cy="17" r="1" fill="#0000001a"/><circle cx="3" cy="18" r="0.9" fill="#00000018"/>' },
+  organza: { size: 10, html: '<rect width="10" height="10" fill="var(--dress-fill)"/><line x1="0" y1="0" x2="0" y2="10" stroke="#00000014" stroke-width="0.5"/><line x1="0" y1="0" x2="10" y2="0" stroke="#00000014" stroke-width="0.5"/>' },
+  beaded:  { size: 26, html: '<rect width="26" height="26" fill="var(--dress-fill)"/><circle cx="13" cy="13" r="1.8" fill="#00000028"/><circle cx="12.3" cy="12.3" r="0.6" fill="#ffffff90"/>' },
+};
+TEXTURE_TILE.other = TEXTURE_TILE.satin; // 새 도형 없이 기본값(satin) 재사용 (SPEC.md §4 기본값)
+
+let texturePatternCounter = 0;
+// svg 자신의 <defs>에 유일한 id로 패턴을 등록하고, fill 속성에 쓸 url(#...) 문자열을 반환한다
+// (문서 전체에서 <svg>가 여러 개이므로 id 충돌을 피하려면 매번 새 id를 만들어야 한다)
+function registerTexturePattern(svgNS, defs, textureId) {
+  texturePatternCounter += 1;
+  const id = `tex-${textureId}-${texturePatternCounter}`;
+  const tile = TEXTURE_TILE[textureId];
+  const pattern = document.createElementNS(svgNS, 'pattern');
+  pattern.setAttribute('id', id);
+  pattern.setAttribute('patternUnits', 'userSpaceOnUse');
+  pattern.setAttribute('width', tile.size);
+  pattern.setAttribute('height', tile.size);
+  pattern.innerHTML = tile.html;
+  defs.appendChild(pattern);
+  return `url(#${id})`;
+}
+
+// 디테일: 벨트/리본은 (합성 대상 실루엣의) 허리선 위치가 필요해 waistY를 함께 받는다.
+// 나머지는 힙/어깨/밑단처럼 실루엣에 따라 바뀌지 않는 고정 앵커만 쓴다
+const detail = {};
+detail.belt = (A, waistY) => {
+  const { waistL, waistR } = waistPointsAt(A, waistY);
+  return { d: `M ${waistL - 4} ${waistY - 7} L ${waistR + 4} ${waistY - 7} L ${waistR + 4} ${waistY + 7} L ${waistL - 4} ${waistY + 7} Z`, style: 'accent' };
+};
+detail.bow = (A, waistY) => {
+  const w = 16, h = 12;
+  return {
+    d: `M ${A.centerX} ${waistY} L ${A.centerX - w} ${waistY - h} L ${A.centerX - w} ${waistY + h} Z
+        M ${A.centerX} ${waistY} L ${A.centerX + w} ${waistY - h} L ${A.centerX + w} ${waistY + h} Z
+        M ${A.centerX - 5} ${waistY - 6} L ${A.centerX + 5} ${waistY - 6} L ${A.centerX + 5} ${waistY + 6} L ${A.centerX - 5} ${waistY + 6} Z`,
+    style: 'accent',
+  };
+};
+detail.slit = (A) => {
+  const slitX = A.centerX + 40;
+  return { d: `M ${slitX - 14} ${A.hemY} L ${A.centerX + 10} ${A.kneeY} L ${slitX + 14} ${A.hemY} Z`, style: 'bg' };
+};
+detail.pockets = (A) => {
+  const y = A.hipY + 15, w = 20, h = 26;
+  return {
+    d: `M ${A.hipL + 6} ${y} l ${w} 0 l 0 ${h} l -${w} 0 Z M ${A.hipR - 6 - w} ${y} l ${w} 0 l 0 ${h} l -${w} 0 Z`,
+    style: 'outline',
+  };
+};
+detail.cape = (A) => {
+  const capeY = A.hemY - 20;
+  return {
+    d: `M ${A.shoulderL} ${A.shoulderY} C ${A.shoulderL - 50} ${A.shoulderY + 150} ${A.shoulderL - 30} ${capeY - 80} ${A.shoulderL - 10} ${capeY}
+        M ${A.shoulderR} ${A.shoulderY} C ${A.shoulderR + 50} ${A.shoulderY + 150} ${A.shoulderR + 30} ${capeY - 80} ${A.shoulderR + 10} ${capeY}`,
+    style: 'line',
+  };
+};
+detail.glove = (A) => {
+  const y = A.hipY - 15, w = 18, h = 34;
+  return {
+    d: `M ${A.hipL - 20} ${y} l ${w} 0 l 0 ${h} l -${w} 0 Z M ${A.hipR + 2} ${y} l ${w} 0 l 0 ${h} l -${w} 0 Z`,
+    style: 'outline',
+  };
+};
+
+// 스커트+보디스+소매+텍스처+디테일까지 전부 합성한 드레스 <svg>를 반환 (Phase 3 미리보기·매트릭스 공용)
+function buildFullDressSvg(silhouetteId, necklineId, sleeveId, textureId, detailIds) {
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(svgNS, 'svg');
+  svg.setAttribute('viewBox', '0 0 400 700');
+
+  const defs = document.createElementNS(svgNS, 'defs');
+  svg.appendChild(defs);
+  const fillUrl = registerTexturePattern(svgNS, defs, textureId);
+
+  const { d: skirtD, waistY } = silhouette[silhouetteId](A);
+  const bodiceD = buildBodice(A, necklineId, waistY);
+
+  // 1. 스커트, 2. 보디스 (렌더 순서 SPEC.md §3.3)
+  [[skirtD, silhouetteId === 'other'], [bodiceD, necklineId === 'other']].forEach(([d, isOther]) => {
+    const p = document.createElementNS(svgNS, 'path');
+    p.setAttribute('d', d);
+    p.setAttribute('fill', fillUrl);
+    p.setAttribute('class', 'dress-outline' + (isOther ? ' other' : ''));
+    svg.appendChild(p);
+  });
+
+  // 3. 소매
+  const { d: sleeveD } = sleeve[sleeveId](A);
+  if (sleeveD) {
+    const p = document.createElementNS(svgNS, 'path');
+    p.setAttribute('d', sleeveD);
+    p.setAttribute('fill', fillUrl);
+    p.setAttribute('class', 'dress-outline' + (sleeveId === 'other' ? ' other' : ''));
+    svg.appendChild(p);
+
+    if (sleeveId === 'detachable') {
+      [A.shoulderL, A.shoulderR].forEach((shoulderX) => {
+        const mark = document.createElementNS(svgNS, 'line');
+        const markY = A.shoulderY + 90;
+        mark.setAttribute('x1', shoulderX - 10);
+        mark.setAttribute('x2', shoulderX + 10);
+        mark.setAttribute('y1', markY);
+        mark.setAttribute('y2', markY);
+        mark.setAttribute('class', 'detach-mark');
+        svg.appendChild(mark);
+      });
+    }
+  }
+
+  // 4. 디테일
+  detailIds.forEach((id) => {
+    const { d, style } = detail[id](A, waistY);
+    const p = document.createElementNS(svgNS, 'path');
+    p.setAttribute('d', d);
+    p.setAttribute('class', `detail-${style}`);
+    svg.appendChild(p);
+  });
+
+  return svg;
+}
+
+// Phase 3 디버그 행 공용: label을 붙인 아이템 하나를 만들어 컨테이너에 추가
+function appendDebugItem(container, svg, labelText) {
+  const item = document.createElement('div');
+  item.className = 'debug-item';
+  item.appendChild(svg);
+  const label = document.createElement('span');
+  label.textContent = labelText;
+  item.appendChild(label);
+  container.appendChild(item);
+}
+
+// 소매 칩 크롭 확인 — SPEC.md §3.5 소매 칩 viewBox. 넥라인은 어깨점까지 닿는 v넥으로 골라
+// 소매가 보디스 어깨선에 자연스럽게 이어붙는지 보이게 한다 (스트랩리스 넥라인은 어깨점이 비어 있다)
+function renderSleeveRow() {
+  const row = document.getElementById('sleeveRow');
+  SLEEVE_ORDER.forEach((id) => {
+    const svg = buildFullDressSvg('aline', 'v', id, 'satin', []);
+    svg.setAttribute('viewBox', '100 100 200 200');
+    appendDebugItem(row, svg, LABEL.ko.sleeve[id]);
+  });
+}
+
+// 텍스처 스와치 확인 — 드레스 형태와 무관하게 패턴 자체만 작은 사각형으로 렌더링
+function renderTextureRow() {
+  const row = document.getElementById('textureRow');
+  const svgNS = 'http://www.w3.org/2000/svg';
+  TEXTURE_ORDER.forEach((id) => {
+    const svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('viewBox', '0 0 40 40');
+    const defs = document.createElementNS(svgNS, 'defs');
+    svg.appendChild(defs);
+    const fillUrl = registerTexturePattern(svgNS, defs, id);
+    const rect = document.createElementNS(svgNS, 'rect');
+    rect.setAttribute('width', '40');
+    rect.setAttribute('height', '40');
+    rect.setAttribute('fill', fillUrl);
+    rect.setAttribute('class', 'dress-outline');
+    svg.appendChild(rect);
+    appendDebugItem(row, svg, LABEL.ko.texture[id]);
+  });
+}
+
+// 디테일 확인 — 한 번에 하나씩만 켜서 각 디테일의 모양을 명확히 확인. 케이프(어깨)~슬릿(밑단)까지
+// 위치가 제각각이라 크롭하지 않고 전신을 그대로 보여준다
+function renderDetailRow() {
+  const row = document.getElementById('detailRow');
+  DETAIL_ORDER.forEach((id) => {
+    const svg = buildFullDressSvg('aline', 'sweetheart', 'none', 'satin', [id]);
+    appendDebugItem(row, svg, LABEL.ko.detail[id]);
+  });
+}
+
 // Phase 1 임시 확인 페이지 — 6종이 서로 구분되고 자기 허리선에서 시작하는지 검증용
 function renderDebugRow() {
   const row = document.getElementById('debugRow');
@@ -474,6 +738,9 @@ function renderNecklineMatrix() {
 
 renderDebugRow();
 renderNecklineMatrix();
+renderSleeveRow();
+renderTextureRow();
+renderDetailRow();
 </script>
 </body>
 </html>
