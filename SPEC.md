@@ -144,12 +144,24 @@ Sketch = {
   skirtTexture:   'satin'|'mikado'|'tulle'|'lace'|'organza'|'beaded'|'other',
   bodiceTexture:  'satin'|'mikado'|'tulle'|'lace'|'organza'|'beaded'|'other',
   sleeveTexture:  'satin'|'mikado'|'tulle'|'lace'|'organza'|'beaded'|'other',
+  textureRef:     { skirt: TextureRef, bodice: TextureRef, sleeve: TextureRef },
   custom:         { [category: string]: string }  // other 선택 시 사용자 입력. 예: { neckline: '아시메트릭' }
+}
+TextureRef = {
+  note:  string,       // 참고 메모, 자유 텍스트. 예: "이 사진 질감이랑 비슷함"
+  image: string|null,  // 사용자가 올린 참고 이미지 1장, data URL(base64)로 저장
 }
 ```
 텍스처는 스커트/보디스/소매가 **각각 독립적으로** 고른다 (예: 스커트=새틴, 보디스=비즈, 소매=오간자
 처럼 파츠마다 다른 원단을 쓸 수 있다). 세 필드 모두 같은 texture enum(satin/mikado/tulle/lace/
 organza/beaded/other)을 공유한다.
+
+**`textureRef`는 순수 참고용이다.** 스케치 도식 렌더링에는 전혀 반영하지 않는다 — 사용자가
+웹에서 찾은 실제 원단 사진/링크를 "이 정도 느낌이었다"는 개인 메모로만 남기는 용도다. 시스템
+기본 텍스처 목록(TEXTURE_ORDER)에 새 값으로 편입되거나 다른 기록과 공유되지 않는다(동기화
+개념이 아니다). 업로드한 이미지는 저장 전에 캔버스로 리사이즈해 localStorage 용량을 아낀다.
+공유 코드(§5.2)와 URL 해시 인코딩에는 포함하지 않는다 — 이미지 데이터가 크기 때문이다.
+JSON 백업(§5.3)에는 그대로 포함된다.
 
 디테일(벨트·리본 등 부가 장식) 카테고리는 두지 않는다 — 범위 밖.
 
@@ -169,6 +181,7 @@ const LABEL = {
 ```
 **기본값**: 새 기록은 `aline` / `sweetheart` / `none` / `natural` / `vback` / `sweep` /
 `satin`(skirtTexture) / `satin`(bodiceTexture) / `satin`(sleeveTexture)로 시작한다.
+`textureRef`의 skirt/bodice/sleeve는 각각 `{ note: '', image: null }`로 시작한다.
 아무것도 안 골라도 저장 가능해야 한다.
 ---
 ## 5. 공유 (요구사항 3)
@@ -186,6 +199,7 @@ const LABEL = {
 - 링크를 연 사람은 **읽기 전용 뷰**로 진입한다. 기존 데이터를 절대 덮어쓰지 않는다
 - 읽기 전용 뷰 하단에 "내 목록에 추가" 버튼 → 명시적으로 눌러야 저장된다
 - 공유 전 **포함 항목 선택 다이얼로그**를 띄운다. 메모와 착용감은 개인적인 내용이므로 **기본 제외**
+- `textureRef`(참고 메모·이미지)는 항상 제외한다 — 이미지 데이터 때문에 URL이 감당 못 할 만큼 커진다
 #### 스케치 코드 규격
 ```
 형식: [버전1자] + [9개 분류 각 1자]
