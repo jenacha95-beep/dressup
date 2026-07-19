@@ -602,21 +602,24 @@ neckline.square = (A) => {
   };
 };
 
-// 가슴선에서 시작해(어깨는 드러남) 목 앞에서 좁아진 뒤, 목 부분까지 실제로 올라가
-// 보이는 밴드를 두르고 둥글게 마감된다 — 밴드 없이 바로 뾰족/둥근 점으로 끝나면
-// 목이 텅 빈 것처럼 어색해 보인다는 피드백을 반영해 bandBottomY~bandTopY 구간을 추가
+// 가슴선에서 시작해(어깨는 드러남) 목 앞에서 좁아져 둥근 앞고리로 마감된다. 목 뒤로
+// 넘어가 접히는 부분은 이 앞고리와 겹치는 별도의 둥근 조각(overlay)으로 정면에 그대로
+// 노출해 표현한다 — 실제로는 안 보이는 부분이지만, 실루엣을 명확히 남기기 위해 정면에
+// 펼쳐 보여주기로 함 (사용자 확인)
 neckline.halter = (A) => {
   const neckHalf = 9;
-  const bandBottomY = A.neckY + 26;
-  const bandTopY = A.neckY - 12;
+  const frontTopY = A.neckY + 15;
+  const overlayBottomY = frontTopY + 8;
+  const overlayTopY = A.neckY - 18;
   return {
     strapless: true,
     d: `M ${A.bustL} ${A.bustY}
-        Q ${A.centerX - 34} ${A.bustY - 30} ${A.centerX - neckHalf} ${bandBottomY}
-        L ${A.centerX - neckHalf} ${bandTopY}
-        Q ${A.centerX} ${bandTopY - 8} ${A.centerX + neckHalf} ${bandTopY}
-        L ${A.centerX + neckHalf} ${bandBottomY}
+        Q ${A.centerX - 34} ${A.bustY - 30} ${A.centerX - neckHalf} ${frontTopY}
+        Q ${A.centerX} ${frontTopY - 8} ${A.centerX + neckHalf} ${frontTopY}
         Q ${A.centerX + 34} ${A.bustY - 30} ${A.bustR} ${A.bustY}`,
+    overlay: `M ${A.centerX - 16} ${overlayBottomY}
+        C ${A.centerX - 16} ${overlayTopY} ${A.centerX + 16} ${overlayTopY} ${A.centerX + 16} ${overlayBottomY}
+        C ${A.centerX + 16} ${overlayBottomY + 14} ${A.centerX - 16} ${overlayBottomY + 14} ${A.centerX - 16} ${overlayBottomY} Z`,
   };
 };
 
@@ -677,16 +680,17 @@ neckline.scoop = (A) => {
   };
 };
 
-// 가슴선 양끝에서 대각선으로 올라가 목밴드의 반대쪽 끝에 닿는다 — 왼쪽 가슴은 목밴드
-// 오른쪽으로, 오른쪽 가슴은 목밴드 왼쪽으로 이어지며 중앙에서 서로 교차해 꼬임을 만든다.
-// 교차 지점의 폭(pinchHalf)을 0에 가깝게 좁히지 않고 두께감 있게 유지하고, 교차 위로는
-// 목 부분까지 올라가는 밴드(bandBottomY~bandTopY)를 둔다
+// 가슴선 양끝에서 대각선으로 올라가 서로 교차하는 두꺼운 스트랩을 만든다 — 왼쪽 가슴은
+// 교차 뒤 오른쪽으로, 오른쪽 가슴은 교차 뒤 왼쪽으로 이어진다. 목 뒤로 넘어가 접히는
+// 부분은 이 교차 지점과 겹치는 별도의 사각 조각(overlay)으로 정면에 그대로 노출해
+// 표현한다 — 실제로는 안 보이는 부분이지만 실루엣을 명확히 남기기 위해 정면에 펼쳐 보임
 neckline.twisthalter = (A) => {
   const neckHalf = 9;
-  const bandBottomY = A.neckY + 22;
-  const bandTopY = A.neckY - 12;
+  const frontTopY = A.neckY + 15;
   const pinchHalf = 15;
   const pinchY = A.bustY - 32;
+  const overlayBottomY = frontTopY + 8;
+  const overlayTopY = A.neckY - 18;
 
   // 채워진 도형만으로는 꼬임이 잘 안 보여서, 실제 교차점 위치를 계산해 짧은 강조선을
   // 얹는다(실루엣의 주름선과 같은 개념 — 판단에 영향 없는 순수 장식용). 교차점은
@@ -698,12 +702,14 @@ neckline.twisthalter = (A) => {
     strapless: true,
     d: `M ${A.bustL} ${A.bustY}
         L ${A.centerX + pinchHalf} ${pinchY}
-        L ${A.centerX + neckHalf} ${bandBottomY}
-        L ${A.centerX + neckHalf} ${bandTopY}
-        Q ${A.centerX} ${bandTopY - 8} ${A.centerX - neckHalf} ${bandTopY}
-        L ${A.centerX - neckHalf} ${bandBottomY}
+        L ${A.centerX + neckHalf} ${frontTopY}
+        L ${A.centerX - neckHalf} ${frontTopY}
         L ${A.centerX - pinchHalf} ${pinchY}
         L ${A.bustR} ${A.bustY}`,
+    overlay: `M ${A.centerX - neckHalf - 2} ${overlayBottomY}
+        L ${A.centerX - neckHalf - 2} ${overlayTopY}
+        Q ${A.centerX} ${overlayTopY - 8} ${A.centerX + neckHalf + 2} ${overlayTopY}
+        L ${A.centerX + neckHalf + 2} ${overlayBottomY} Z`,
     detailLines: [
       `M ${A.centerX - 16} ${crossY - 12} L ${A.centerX + 16} ${crossY + 12}`,
       `M ${A.centerX + 16} ${crossY - 12} L ${A.centerX - 16} ${crossY + 12}`,
@@ -734,7 +740,7 @@ function stripMove(d) {
 // buildFullDressSvg가 보디스 위에 얹을 수 있게 한다
 function buildBodice(A, necklineId, waistY) {
   const { waistL, waistR } = waistPointsAt(A, waistY);
-  const { d: necklineD, strapless, detailLines } = neckline[necklineId](A);
+  const { d: necklineD, strapless, detailLines, overlay } = neckline[necklineId](A);
   const necklineRest = stripMove(necklineD);
 
   const d = strapless
@@ -747,7 +753,7 @@ function buildBodice(A, necklineId, waistY) {
       ${necklineRest}
       C ${A.bustR} ${A.shoulderY + (A.bustY - A.shoulderY) * 0.5} ${waistR} ${A.bustY} ${waistR} ${waistY} Z`;
 
-  return { d, detailLines: detailLines || [] };
+  return { d, detailLines: detailLines || [], overlay: overlay || null };
 }
 
 // 소매 한쪽(어깨점 기준)을 그리는 물방울(petal) 모양 헬퍼. side: 왼쪽=-1(shoulderL), 오른쪽=1(shoulderR)
@@ -816,16 +822,17 @@ function buildFullDressSvg(silhouetteId, necklineId, sleeveId, skirtTextureId, b
   svg.appendChild(defs);
 
   const { d: skirtD, waistY, foldLines } = silhouette[silhouetteId](A);
-  const { d: bodiceD, detailLines: bodiceDetailLines } = buildBodice(A, necklineId, waistY);
+  const { d: bodiceD, detailLines: bodiceDetailLines, overlay: bodiceOverlay } = buildBodice(A, necklineId, waistY);
 
   // 1. 스커트, 2. 보디스 (렌더 순서 SPEC.md §3.3)
+  const bodiceFillUrl = registerTexturePattern(svgNS, defs, bodiceTextureId);
   [
-    [skirtD, silhouetteId === 'other', skirtTextureId],
-    [bodiceD, necklineId === 'other', bodiceTextureId],
-  ].forEach(([d, isOther, textureId]) => {
+    [skirtD, silhouetteId === 'other', registerTexturePattern(svgNS, defs, skirtTextureId)],
+    [bodiceD, necklineId === 'other', bodiceFillUrl],
+  ].forEach(([d, isOther, fillUrl]) => {
     const p = document.createElementNS(svgNS, 'path');
     p.setAttribute('d', d);
-    p.setAttribute('fill', registerTexturePattern(svgNS, defs, textureId));
+    p.setAttribute('fill', fillUrl);
     p.setAttribute('class', 'dress-outline' + (isOther ? ' other' : ''));
     svg.appendChild(p);
   });
@@ -839,6 +846,16 @@ function buildFullDressSvg(silhouetteId, necklineId, sleeveId, skirtTextureId, b
     p.setAttribute('class', 'fold-line');
     svg.appendChild(p);
   });
+
+  // 홀터 계열처럼 목 뒤로 넘어가 접히는 조각은 앞고리/교차 위에 겹치는 별도 조각으로
+  // 그린다 — 같은 보디스 텍스처를 쓰고 자기 외곽선을 가져서 "겹쳐진 조각"처럼 보인다
+  if (bodiceOverlay) {
+    const p = document.createElementNS(svgNS, 'path');
+    p.setAttribute('d', bodiceOverlay);
+    p.setAttribute('fill', bodiceFillUrl);
+    p.setAttribute('class', 'dress-outline');
+    svg.appendChild(p);
+  }
 
   // 3. 소매
   const { d: sleeveD } = sleeve[sleeveId](A);
