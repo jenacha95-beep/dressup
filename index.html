@@ -892,6 +892,12 @@ function updateCustomText(category, value) {
 // ── 렌더 ────────────────────────────────────────────────────────────────
 function render() {
   const app = document.getElementById('app');
+  // render()는 매번 innerHTML을 통째로 비우고 다시 그리므로, 칩을 클릭하거나 참고
+  // 이미지를 추가할 때마다 .scroll-pane 자체가 새 엘리먼트로 교체되어 스크롤이 맨 위로
+  // 리셋된다. 다시 그리기 전 스크롤 위치를 기억해뒀다가 그대로 복원한다
+  const prevScrollPane = app.querySelector('.scroll-pane');
+  const prevScrollTop = prevScrollPane ? prevScrollPane.scrollTop : 0;
+
   app.innerHTML = '';
   if (state.view === 'record' && state.current) {
     app.appendChild(buildRecordScreen());
@@ -904,6 +910,11 @@ function render() {
   }
   if (state.shareDialog) {
     app.appendChild(buildShareDialog());
+  }
+
+  const newScrollPane = app.querySelector('.scroll-pane');
+  if (newScrollPane) {
+    newScrollPane.scrollTop = prevScrollTop;
   }
 }
 
