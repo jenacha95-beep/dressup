@@ -1667,35 +1667,37 @@ function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
   return lineY + lineHeight;
 }
 
+// 내보내기 전용 순서/라벨. 위→아래로 소매/바디/스커트 (사용자 요청 순서 — 앱 안의
+// "보디스 텍스처" 칩 라벨과는 별개로, 이 참고 시트에서만 "바디"라는 짧은 이름을 쓴다)
 const TEXTURE_REF_PARTS = [
-  { key: 'skirt', label: '스커트' },
-  { key: 'bodice', label: '보디스' },
   { key: 'sleeve', label: '소매' },
+  { key: 'bodice', label: '바디' },
+  { key: 'skirt', label: '스커트' },
 ];
 
-// textureRef 참고 메모+이미지를 드레스 그림 옆에 작은 스와치로 그려 넣는다 (SPEC.md §5.1).
-// 참고가 하나도 없으면 아무것도 그리지 않는다
-async function drawTextureRefRow(ctx, textureRef, x, y, rowWidth) {
-  const parts = TEXTURE_REF_PARTS.filter(({ key }) => {
+function textureRefPartsWithContent(textureRef) {
+  return TEXTURE_REF_PARTS.filter(({ key }) => {
     const ref = textureRef[key];
     return ref && (ref.image || ref.note);
   });
-  if (parts.length === 0) return;
+}
 
-  const cellW = rowWidth / parts.length;
+// textureRef 참고 메모+이미지를 드레스 그림 오른쪽에 위→아래로 쌓아 그려 넣는다 (SPEC.md §5.1)
+async function drawTextureRefColumn(ctx, parts, textureRef, x, y, colWidth, cellH) {
   const imgSize = 64;
+  const cx = x + colWidth / 2;
 
   for (let i = 0; i < parts.length; i++) {
     const { key, label } = parts[i];
     const ref = textureRef[key];
-    const cx = x + i * cellW + cellW / 2;
+    const cellY = y + i * cellH;
 
     ctx.fillStyle = CANVAS_COLORS.text;
     ctx.textAlign = 'center';
     ctx.font = 'bold 12px sans-serif';
-    ctx.fillText(label, cx, y);
+    ctx.fillText(label, cx, cellY);
 
-    let nextY = y + 10;
+    let nextY = cellY + 10;
     if (ref.image) {
       const img = await loadImage(ref.image);
       ctx.drawImage(img, cx - imgSize / 2, nextY, imgSize, imgSize);
@@ -1707,28 +1709,28 @@ async function drawTextureRefRow(ctx, textureRef, x, y, rowWidth) {
     if (ref.note) {
       ctx.font = '11px sans-serif';
       ctx.fillStyle = CANVAS_COLORS.text;
-      wrapText(ctx, ref.note, cx, nextY, cellW - 8, 13);
+      wrapText(ctx, ref.note, cx, nextY, colWidth - 8, 13);
     }
   }
 }
 
-function hasAnyTextureRef(textureRef) {
-  return TEXTURE_REF_PARTS.some(({ key }) => {
-    const ref = textureRef[key];
-    return ref && (ref.image || ref.note);
-  });
-}
-
-// 단일 드레스 한 장 — 드레스 그림 + 매장명/드레스명/별점 + (있으면) 참고 스와치
+// 단일 드레스 한 장 — 왼쪽에 드레스, (참고가 있으면) 오른쪽에 소매/바디/스커트 세로 스와치
 async function exportFittingImage(fitting) {
   const scale = 2;
-  const baseW = 480;
-  const dressW = 260;
+  const gap = 16;
+  const dressW = 230;
   const dressH = Math.round(dressW * (700 / 400));
   const headerH = 56;
-  const refRowH = 130;
-  const hasRef = hasAnyTextureRef(fitting.sketch.textureRef);
-  const totalH = headerH + dressH + (hasRef ? refRowH : 16);
+  const refColW = 130;
+  const refCellH = 120;
+
+  const parts = textureRefPartsWithContent(fitting.sketch.textureRef);
+  const hasRef = parts.length > 0;
+  const refColH = parts.length * refCellH;
+
+  const bodyH = Math.max(dressH, refColH);
+  const baseW = gap + dressW + (hasRef ? gap + refColW : 0) + gap;
+  const totalH = headerH + bodyH + gap;
 
   const canvas = document.createElement('canvas');
   canvas.width = baseW * scale;
@@ -1750,10 +1752,10 @@ async function exportFittingImage(fitting) {
   ctx.fillText(fitting.rating ? '★'.repeat(fitting.rating) : '', baseW - 16, 26);
 
   const dressImg = await loadSvgAsImage(buildPreviewSvg(fitting.sketch), dressW * scale, dressH * scale);
-  ctx.drawImage(dressImg, (baseW - dressW) / 2, headerH, dressW, dressH);
+  ctx.drawImage(dressImg, gap, headerH, dressW, dressH);
 
   if (hasRef) {
-    await drawTextureRefRow(ctx, fitting.sketch.textureRef, 16, headerH + dressH + 26, baseW - 32);
+    await drawTextureRefColumn(ctx, parts, fitting.sketch.textureRef, gap + dressW + gap, headerH, refColW, refCellH);
   }
 
   return canvas;
