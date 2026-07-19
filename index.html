@@ -351,14 +351,14 @@ const A = {
   bustY:      180,
   bustL:      158,
   bustR:      242,
-  waistY:     280,
+  waistY:     250,
   waistL:     168,
   waistR:     232,
-  hipY:       340,
+  hipY:       310,
   hipL:       155,
   hipR:       245,
-  kneeY:      500,
-  hemY:       640,
+  kneeY:      470,
+  hemY:       610,
 };
 
 // 한글 라벨. texture 라벨은 skirtTexture/bodiceTexture/sleeveTexture가 공유한다 (SPEC.md §4)
@@ -1221,7 +1221,7 @@ let state = {
   lastShopName: '',
   lastVisitedAt: '',
   deleteMenuId: null,
-  uiCollapsed: { fitNote: true, memo: true },
+  uiCollapsed: { memo: true },
   compareMode: false, // 목록 화면의 "비교하기" 선택 모드 여부
   compareSelection: [], // 비교 선택된 fitting id, 최대 3개
   shared: null, // URL 해시로 들어온 읽기 전용 공유 데이터 { items: [...] }
@@ -1252,7 +1252,7 @@ function createFitting() {
     id: crypto.randomUUID(),
     shopName: state.lastShopName,
     visitedAt: state.lastVisitedAt || todayStr(),
-    dressName: '', priceKrw: null, rating: null, memo: '', fitNote: '',
+    dressName: '', priceKrw: null, rating: null, memo: '',
     sketch: defaultSketch(),
   };
 }
@@ -1698,7 +1698,6 @@ function buildCollapsibleField(key, title, value, onInput) {
 
 function buildNotesSections() {
   const wrap = document.createElement('div');
-  wrap.appendChild(buildCollapsibleField('fitNote', '착용감', state.current.fitNote, (v) => updateCurrentField('fitNote', v)));
   wrap.appendChild(buildCollapsibleField('memo', '메모', state.current.memo, (v) => updateCurrentField('memo', v)));
   return wrap;
 }
@@ -2184,12 +2183,13 @@ async function exportFittingImage(fitting) {
   const headerH = 56;
   const refColW = 130;
   const refCellH = 120;
+  const refYOffset = 24; // 스와치 칼럼을 드레스 그림보다 살짝 아래에서 시작하게
 
   const parts = textureRefPartsWithContent(fitting.sketch.textureRef);
   const hasRef = parts.length > 0;
   const refColH = parts.length * refCellH;
 
-  const bodyH = Math.max(dressH, refColH);
+  const bodyH = Math.max(dressH, hasRef ? refYOffset + refColH : 0);
   const baseW = gap + dressW + (hasRef ? gap + refColW : 0) + gap;
   const totalH = headerH + bodyH + gap;
 
@@ -2216,7 +2216,7 @@ async function exportFittingImage(fitting) {
   ctx.drawImage(dressImg, gap, headerH, dressW, dressH);
 
   if (hasRef) {
-    await drawTextureRefColumn(ctx, parts, fitting.sketch.textureRef, gap + dressW + gap, headerH, refColW, refCellH);
+    await drawTextureRefColumn(ctx, parts, fitting.sketch.textureRef, gap + dressW + gap, headerH + refYOffset, refColW, refCellH);
   }
 
   return canvas;
@@ -2496,7 +2496,7 @@ function buildShareDialog() {
 
   const note = document.createElement('p');
   note.className = 'modal-note';
-  note.textContent = '메모·착용감·참고 이미지는 공유 링크에 포함되지 않습니다.';
+  note.textContent = '메모·참고 이미지는 공유 링크에 포함되지 않습니다.';
   box.appendChild(note);
 
   const linkBox = document.createElement('div');
@@ -2623,7 +2623,6 @@ function addSharedItemToStore(item) {
     priceKrw: null,
     rating: item.rating || null,
     memo: '',
-    fitNote: '',
     sketch: item.sketch,
   };
   state.store.fittings.push(fitting);
