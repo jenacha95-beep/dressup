@@ -37,6 +37,12 @@
     stroke-width: 0.6;
     opacity: 0.45;
   }
+  .torso-outline {
+    fill: none;
+    stroke: var(--outline);
+    stroke-width: 0.8;
+    opacity: 0.35;
+  }
 
   /* 공용 */
   .btn {
@@ -810,6 +816,25 @@ function registerTexturePattern(svgNS, defs, textureId) {
   return `url(#${id})`;
 }
 
+// 모든 넥라인 밑에 깔리는 기본 마네킹(목~어깨~가슴 상단) 윤곽선. 넥라인 도형이 단독으로는
+// 허공에 뜬 것처럼 어색해 보이는 문제를, 각 넥라인을 손질하는 대신 공통 배경 실루엣을 깔아
+// 해결한다 — 보디스가 그 위를 덮으므로 네크라인이 파인 부분에서만 드러난다
+function torsoBase(A) {
+  const neckHalf = 12;
+  const neckTopY = A.neckY - 43;
+  const tuckY = A.shoulderY - 12;
+  const bustBottomY = A.bustY + 18;
+  return `M ${A.centerX - neckHalf} ${neckTopY}
+      L ${A.centerX - neckHalf} ${tuckY}
+      Q ${A.centerX - neckHalf - 8} ${A.shoulderY - 2} ${A.shoulderL} ${A.shoulderY}
+      Q ${A.shoulderL + 12} ${A.bustY - 15} ${A.bustL} ${bustBottomY}
+      L ${A.bustR} ${bustBottomY}
+      Q ${A.shoulderR - 12} ${A.bustY - 15} ${A.shoulderR} ${A.shoulderY}
+      Q ${A.centerX + neckHalf + 8} ${A.shoulderY - 2} ${A.centerX + neckHalf} ${tuckY}
+      L ${A.centerX + neckHalf} ${neckTopY}
+      Q ${A.centerX} ${neckTopY - 8} ${A.centerX - neckHalf} ${neckTopY} Z`;
+}
+
 // 스커트+보디스+소매까지 합성한 드레스 <svg>를 반환. 스커트/보디스/소매는 각각 독립된
 // 텍스처를 받는다 (SPEC.md §3.3, §4) — 파츠마다 다른 텍스처를 고르면 허리선에 경계가
 // 보이는 게 정상이다 (좌표는 허리선에서 정확히 겹친다)
@@ -823,6 +848,12 @@ function buildFullDressSvg(silhouetteId, necklineId, sleeveId, skirtTextureId, b
 
   const { d: skirtD, waistY, foldLines } = silhouette[silhouetteId](A);
   const { d: bodiceD, detailLines: bodiceDetailLines, overlay: bodiceOverlay } = buildBodice(A, necklineId, waistY);
+
+  // 0. 마네킹 베이스 — 넥라인/보디스보다 먼저 그려서 항상 맨 뒤에 깔린다
+  const torsoPath = document.createElementNS(svgNS, 'path');
+  torsoPath.setAttribute('d', torsoBase(A));
+  torsoPath.setAttribute('class', 'torso-outline');
+  svg.appendChild(torsoPath);
 
   // 1. 스커트, 2. 보디스 (렌더 순서 SPEC.md §3.3)
   const bodiceFillUrl = registerTexturePattern(svgNS, defs, bodiceTextureId);
@@ -1804,6 +1835,7 @@ const EXPORT_SVG_STYLE = `
   .dress-outline.other { stroke-dasharray: 4 3; }
   .detach-mark { stroke: #8A7A6D; stroke-width: 1; stroke-dasharray: 3 2; }
   .fold-line { fill: none; stroke: #8A7A6D; stroke-width: 0.6; opacity: 0.45; }
+  .torso-outline { fill: none; stroke: #8A7A6D; stroke-width: 0.8; opacity: 0.35; }
 `;
 
 // svg를 지정한 픽셀 크기로 래스터화하기 위해 width/height를 박아 직렬화한다
