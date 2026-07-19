@@ -841,10 +841,18 @@ function buildBodice(A, necklineId, waistY) {
   const { d: necklineD, strapless, detailLines, overlay } = neckline[necklineId](A);
   const necklineRest = stripMove(necklineD);
 
+  // 스트랩리스는 옆선이 가슴선(bustY)에서 뚝 끊겨서, 어깨점에 붙는 소매와 사이에
+  // 빈 틈이 크게 보이는 문제가 있었다. 앞쪽 네크라인 모양은 그대로 두고 옆선만 겨드랑이
+  // 높이(sideTopY)까지 살짝 더 올려, 소매가 있을 때 몸판과 이어지는 느낌이 나게 한다
+  const sideTopY = A.shoulderY + 22;
+  const sideTopL = A.bustL - 8;
+  const sideTopR = A.bustR + 8;
   const d = strapless
     ? `M ${waistL} ${waistY}
-        Q ${A.bustL - 4} ${A.bustY + (waistY - A.bustY) * 0.5} ${A.bustL} ${A.bustY}
+        Q ${A.bustL - 4} ${A.bustY + (waistY - A.bustY) * 0.5} ${sideTopL} ${sideTopY}
+        L ${A.bustL} ${A.bustY}
         ${necklineRest}
+        L ${sideTopR} ${sideTopY}
         Q ${A.bustR + 4} ${A.bustY + (waistY - A.bustY) * 0.5} ${waistR} ${waistY} Z`
     : `M ${waistL} ${waistY}
       C ${waistL} ${A.bustY} ${A.bustL} ${A.shoulderY + (A.bustY - A.shoulderY) * 0.5} ${A.shoulderL} ${A.shoulderY}
