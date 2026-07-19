@@ -602,17 +602,20 @@ neckline.square = (A) => {
   };
 };
 
-// 가슴선에서 시작해(어깨는 드러남) 목 앞에서 좁아졌다가 작고 둥근 고리(ring) 모양으로
-// 한 번 감기는 넥라인. 뾰족한 V로 모이는 대신 목 부분이 반원으로 둥글게 마감된다
+// 가슴선에서 시작해(어깨는 드러남) 목 앞에서 좁아진 뒤, 목 부분까지 실제로 올라가
+// 보이는 밴드를 두르고 둥글게 마감된다 — 밴드 없이 바로 뾰족/둥근 점으로 끝나면
+// 목이 텅 빈 것처럼 어색해 보인다는 피드백을 반영해 bandBottomY~bandTopY 구간을 추가
 neckline.halter = (A) => {
-  const neckTopY = A.neckY + 6;
-  const neckHalf = 8;
-  const pinchY = A.neckY + 26;
+  const neckHalf = 9;
+  const bandBottomY = A.neckY + 26;
+  const bandTopY = A.neckY - 12;
   return {
     strapless: true,
     d: `M ${A.bustL} ${A.bustY}
-        Q ${A.centerX - 34} ${A.bustY - 30} ${A.centerX - neckHalf} ${pinchY}
-        C ${A.centerX - neckHalf} ${neckTopY} ${A.centerX + neckHalf} ${neckTopY} ${A.centerX + neckHalf} ${pinchY}
+        Q ${A.centerX - 34} ${A.bustY - 30} ${A.centerX - neckHalf} ${bandBottomY}
+        L ${A.centerX - neckHalf} ${bandTopY}
+        Q ${A.centerX} ${bandTopY - 8} ${A.centerX + neckHalf} ${bandTopY}
+        L ${A.centerX + neckHalf} ${bandBottomY}
         Q ${A.centerX + 34} ${A.bustY - 30} ${A.bustR} ${A.bustY}`,
   };
 };
@@ -674,42 +677,42 @@ neckline.scoop = (A) => {
   };
 };
 
-// 가슴선 양끝에서 대각선으로 올라가 목고리의 반대쪽 끝에 닿는다 — 왼쪽 가슴은 목고리
-// 오른쪽으로, 오른쪽 가슴은 목고리 왼쪽으로 이어지며 중앙에서 서로 교차해 꼬임을 만든다
+// 가슴선 양끝에서 대각선으로 올라가 목밴드의 반대쪽 끝에 닿는다 — 왼쪽 가슴은 목밴드
+// 오른쪽으로, 오른쪽 가슴은 목밴드 왼쪽으로 이어지며 중앙에서 서로 교차해 꼬임을 만든다.
+// 교차 지점의 폭(pinchHalf)을 0에 가깝게 좁히지 않고 두께감 있게 유지하고, 교차 위로는
+// 목 부분까지 올라가는 밴드(bandBottomY~bandTopY)를 둔다
 neckline.twisthalter = (A) => {
-  const neckTopY = A.neckY + 6;
-  const neckHalf = 8;
-  const ringY = neckTopY + 20;
+  const neckHalf = 9;
+  const bandBottomY = A.neckY + 22;
+  const bandTopY = A.neckY - 12;
+  const pinchHalf = 15;
+  const pinchY = A.bustY - 32;
+
+  // 채워진 도형만으로는 꼬임이 잘 안 보여서, 실제 교차점 위치를 계산해 짧은 강조선을
+  // 얹는다(실루엣의 주름선과 같은 개념 — 판단에 영향 없는 순수 장식용). 교차점은
+  // bustL→(centerX+pinchHalf, pinchY) 직선이 x=centerX를 지나는 지점
+  const t = (A.centerX - A.bustL) / (A.centerX + pinchHalf - A.bustL);
+  const crossY = A.bustY + t * (pinchY - A.bustY);
+
   return {
     strapless: true,
     d: `M ${A.bustL} ${A.bustY}
-        L ${A.centerX + neckHalf} ${ringY}
-        Q ${A.centerX} ${neckTopY} ${A.centerX - neckHalf} ${ringY}
+        L ${A.centerX + pinchHalf} ${pinchY}
+        L ${A.centerX + neckHalf} ${bandBottomY}
+        L ${A.centerX + neckHalf} ${bandTopY}
+        Q ${A.centerX} ${bandTopY - 8} ${A.centerX - neckHalf} ${bandTopY}
+        L ${A.centerX - neckHalf} ${bandBottomY}
+        L ${A.centerX - pinchHalf} ${pinchY}
         L ${A.bustR} ${A.bustY}`,
+    detailLines: [
+      `M ${A.centerX - 16} ${crossY - 12} L ${A.centerX + 16} ${crossY + 12}`,
+      `M ${A.centerX + 16} ${crossY - 12} L ${A.centerX - 16} ${crossY + 12}`,
+    ],
   };
 };
 
 // 새 도형을 그리지 않고 기본값(sweetheart)을 재사용한다 (SPEC.md §3.4, §4 기본값)
 neckline.other = neckline.sweetheart;
-
-// 채워진 도형만으로는 꼬임이 잘 안 보이는 넥라인에 짧은 강조선을 얹는다 (실루엣의
-// 주름선과 같은 개념 — 판단에 영향 없는 순수 장식용). 해당하는 넥라인만 항목을 둔다
-const NECKLINE_DETAIL_LINES = {
-  twisthalter: (A) => {
-    const neckTopY = A.neckY + 6;
-    const ringY = neckTopY + 20;
-    const crossY = (A.bustY + ringY) / 2;
-    return [
-      `M ${A.centerX - 14} ${crossY - 10} L ${A.centerX + 14} ${crossY + 10}`,
-      `M ${A.centerX + 14} ${crossY - 10} L ${A.centerX - 14} ${crossY + 10}`,
-    ];
-  },
-};
-
-function necklineDetailLines(necklineId) {
-  const fn = NECKLINE_DETAIL_LINES[necklineId];
-  return fn ? fn(A) : [];
-}
 
 // 실루엣이 쓰는 waistY가 기본 허리선(A.waistY)이 아닐 때(엠파이어처럼 가슴 아래로 올라간 경우)
 // 가슴선~기본 허리선 사이를 보간해 그 높이에서의 좌우 폭을 구한다. waistY가 A.waistY면 그대로 A.waistL/R
@@ -726,23 +729,25 @@ function stripMove(d) {
   return d.replace(/^\s*M\s*[-\d.]+\s+[-\d.]+/, '');
 }
 
-// 보디스 = 넥라인이 정하는 윗변 + 좌우 옆선 + (실루엣이 쓰는) 허리선
+// 보디스 = 넥라인이 정하는 윗변 + 좌우 옆선 + (실루엣이 쓰는) 허리선.
+// 넥라인이 detailLines(예: 트위스트홀터의 교차 강조선)를 갖고 있으면 그대로 반환해
+// buildFullDressSvg가 보디스 위에 얹을 수 있게 한다
 function buildBodice(A, necklineId, waistY) {
   const { waistL, waistR } = waistPointsAt(A, waistY);
-  const { d: necklineD, strapless } = neckline[necklineId](A);
+  const { d: necklineD, strapless, detailLines } = neckline[necklineId](A);
   const necklineRest = stripMove(necklineD);
 
-  if (strapless) {
-    return `M ${waistL} ${waistY}
+  const d = strapless
+    ? `M ${waistL} ${waistY}
         Q ${A.bustL - 4} ${A.bustY + (waistY - A.bustY) * 0.5} ${A.bustL} ${A.bustY}
         ${necklineRest}
-        Q ${A.bustR + 4} ${A.bustY + (waistY - A.bustY) * 0.5} ${waistR} ${waistY} Z`;
-  }
-
-  return `M ${waistL} ${waistY}
+        Q ${A.bustR + 4} ${A.bustY + (waistY - A.bustY) * 0.5} ${waistR} ${waistY} Z`
+    : `M ${waistL} ${waistY}
       C ${waistL} ${A.bustY} ${A.bustL} ${A.shoulderY + (A.bustY - A.shoulderY) * 0.5} ${A.shoulderL} ${A.shoulderY}
       ${necklineRest}
       C ${A.bustR} ${A.shoulderY + (A.bustY - A.shoulderY) * 0.5} ${waistR} ${A.bustY} ${waistR} ${waistY} Z`;
+
+  return { d, detailLines: detailLines || [] };
 }
 
 // 소매 한쪽(어깨점 기준)을 그리는 물방울(petal) 모양 헬퍼. side: 왼쪽=-1(shoulderL), 오른쪽=1(shoulderR)
@@ -811,7 +816,7 @@ function buildFullDressSvg(silhouetteId, necklineId, sleeveId, skirtTextureId, b
   svg.appendChild(defs);
 
   const { d: skirtD, waistY, foldLines } = silhouette[silhouetteId](A);
-  const bodiceD = buildBodice(A, necklineId, waistY);
+  const { d: bodiceD, detailLines: bodiceDetailLines } = buildBodice(A, necklineId, waistY);
 
   // 1. 스커트, 2. 보디스 (렌더 순서 SPEC.md §3.3)
   [
@@ -825,17 +830,10 @@ function buildFullDressSvg(silhouetteId, necklineId, sleeveId, skirtTextureId, b
     svg.appendChild(p);
   });
 
-  // 스커트 위에 얇은 주름선을 얹는다 — 실루엣 도식이 통짜 도형처럼 안 보이게 하는
-  // 디테일용 장식선이라, 좌표/형태 판단에는 영향이 없다 (fill 없이 stroke만)
-  (foldLines || []).forEach((d) => {
-    const p = document.createElementNS(svgNS, 'path');
-    p.setAttribute('d', d);
-    p.setAttribute('class', 'fold-line');
-    svg.appendChild(p);
-  });
-
-  // 보디스 위에도 필요한 넥라인(예: 트위스트홀터)만 강조선을 얹는다
-  necklineDetailLines(necklineId).forEach((d) => {
+  // 스커트/보디스 위에 얇은 강조선을 얹는다 — 실루엣이 통짜 도형처럼 안 보이게 하거나
+  // (스커트 주름선) 트위스트홀터처럼 채운 도형만으로는 안 보이는 디테일을 보여주기 위한
+  // 순수 장식용 선이라, 좌표/형태 판단에는 영향이 없다 (fill 없이 stroke만)
+  [...(foldLines || []), ...bodiceDetailLines].forEach((d) => {
     const p = document.createElementNS(svgNS, 'path');
     p.setAttribute('d', d);
     p.setAttribute('class', 'fold-line');
