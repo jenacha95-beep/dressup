@@ -710,7 +710,7 @@ neckline.twisthalter = (A) => {
   const pinchHalf = 15;
   const pinchY = A.bustY - 32;
   const overlayBottomY = frontTopY + 8;
-  const overlayTopY = A.neckY - 18;
+  const overlayTopY = A.neckY - 8;
 
   // 채워진 도형만으로는 꼬임이 잘 안 보여서, 실제 교차점 위치를 계산해 짧은 강조선을
   // 얹는다(실루엣의 주름선과 같은 개념 — 판단에 영향 없는 순수 장식용). 교차점은
@@ -726,10 +726,11 @@ neckline.twisthalter = (A) => {
         L ${A.centerX - neckHalf} ${frontTopY}
         L ${A.centerX - pinchHalf} ${pinchY}
         L ${A.bustR} ${A.bustY}`,
-    overlay: `M ${A.centerX - neckHalf - 2} ${overlayBottomY}
-        L ${A.centerX - neckHalf - 2} ${overlayTopY}
-        Q ${A.centerX} ${overlayTopY - 8} ${A.centerX + neckHalf + 2} ${overlayTopY}
-        L ${A.centerX + neckHalf + 2} ${overlayBottomY} Z`,
+    overlay: `M ${A.centerX - neckHalf - 3} ${overlayBottomY}
+        Q ${A.centerX - neckHalf - 6} ${overlayTopY + 6} ${A.centerX - neckHalf + 1} ${overlayTopY}
+        Q ${A.centerX} ${overlayTopY - 6} ${A.centerX + neckHalf - 1} ${overlayTopY}
+        Q ${A.centerX + neckHalf + 6} ${overlayTopY + 6} ${A.centerX + neckHalf + 3} ${overlayBottomY}
+        Q ${A.centerX} ${overlayBottomY + 9} ${A.centerX - neckHalf - 3} ${overlayBottomY} Z`,
     detailLines: [
       `M ${A.centerX - 16} ${crossY - 12} L ${A.centerX + 16} ${crossY + 12}`,
       `M ${A.centerX + 16} ${crossY - 12} L ${A.centerX - 16} ${crossY + 12}`,
@@ -744,17 +745,17 @@ neckline.other = neckline.sweetheart;
 // 완만하게 파여 내려오는 넥라인 (퀸앤). 옆쪽은 비침 소재를 암시하는 높은 라인, 중앙은
 // 얕은 하트형 다이로 표현한다
 neckline.queenanne = (A) => {
-  const wingHalf = 27;
-  const wingY = A.shoulderY - 45;
-  const peakY = A.bustY - 30;
-  const dipY = A.bustY + 12;
+  const wingHalf = 20;
+  const wingY = A.shoulderY - 25;
+  const peakY = A.bustY - 35;
+  const dipY = A.bustY - 5;
   return {
     strapless: false,
     d: `M ${A.shoulderL} ${A.shoulderY}
-        Q ${A.shoulderL - 6} ${A.shoulderY - 20} ${A.centerX - wingHalf} ${wingY}
-        C ${A.centerX - wingHalf} ${peakY} ${A.centerX - 30} ${peakY} ${A.centerX} ${dipY}
-        C ${A.centerX + 30} ${peakY} ${A.centerX + wingHalf} ${peakY} ${A.centerX + wingHalf} ${wingY}
-        Q ${A.shoulderR + 6} ${A.shoulderY - 20} ${A.shoulderR} ${A.shoulderY}`,
+        Q ${A.shoulderL - 2} ${A.shoulderY - 12} ${A.centerX - wingHalf} ${wingY}
+        C ${A.centerX - wingHalf} ${peakY} ${A.centerX - 26} ${peakY} ${A.centerX} ${dipY}
+        C ${A.centerX + 26} ${peakY} ${A.centerX + wingHalf} ${peakY} ${A.centerX + wingHalf} ${wingY}
+        Q ${A.shoulderR + 2} ${A.shoulderY - 12} ${A.shoulderR} ${A.shoulderY}`,
   };
 };
 
@@ -853,24 +854,33 @@ function buildBodice(A, necklineId, waistY) {
   return { d, detailLines: detailLines || [], overlay: overlay || null };
 }
 
-// 소매 한쪽(어깨점 기준)을 그리는 물방울(petal) 모양 헬퍼. side: 왼쪽=-1(shoulderL), 오른쪽=1(shoulderR)
-// reachX/reachY = 어깨점에서 소매 끝까지의 가로/세로 거리, bulge = 바깥쪽으로 부푸는 정도
-function sleevePetal(A, side, reachX, reachY, bulge) {
+// 소매 한쪽(어깨점 기준)을 그리는 헬퍼. side: 왼쪽=-1(shoulderL), 오른쪽=1(shoulderR)
+// reachX/reachY = 어깨점에서 소매 끝까지의 가로/세로 거리, bulge = 바깥쪽으로 부푸는 정도,
+// cuffHalf = 소매 끝(손목 쪽) 폭의 절반. 어깨 쪽도 topHalf만큼 폭을 둬서, 한 점으로
+// 뾰족하게 모이는 리본이 아니라 원통형 팔처럼 두께가 있게 만든다
+function sleevePetal(A, side, reachX, reachY, bulge, cuffHalf) {
   const shoulderX = side === -1 ? A.shoulderL : A.shoulderR;
+  const topHalf = 6;
   const outX = shoulderX + side * reachX;
   const outY = A.shoulderY + reachY;
-  return `M ${shoulderX} ${A.shoulderY}
-      C ${shoulderX + side * bulge} ${A.shoulderY + reachY * 0.25} ${outX + side * bulge * 0.4} ${outY - reachY * 0.2} ${outX} ${outY}
-      C ${outX - side * bulge * 0.3} ${outY - reachY * 0.3} ${shoulderX - side * bulge * 0.2} ${A.shoulderY + reachY * 0.45} ${shoulderX} ${A.shoulderY} Z`;
+  const topInner = shoulderX - side * topHalf * 0.4;
+  const topOuter = shoulderX + side * topHalf * 0.6;
+  const botOuter = outX + side * cuffHalf;
+  const botInner = outX - side * cuffHalf;
+  return `M ${topInner} ${A.shoulderY}
+      L ${topOuter} ${A.shoulderY}
+      C ${topOuter + side * bulge} ${A.shoulderY + reachY * 0.3} ${botOuter + side * bulge * 0.3} ${outY - reachY * 0.25} ${botOuter} ${outY}
+      L ${botInner} ${outY}
+      C ${topInner - side * bulge * 0.25} ${A.shoulderY + reachY * 0.35} ${topInner - side * bulge * 0.1} ${A.shoulderY + reachY * 0.1} ${topInner} ${A.shoulderY} Z`;
 }
 
 // 소매: 어깨점 기준 좌우 대칭 path (SPEC.md §3.2). 두 소매를 하나의 d에 서브패스로 담는다
 const sleeve = {};
 sleeve.none = () => ({ d: '' });
-sleeve.cap = (A) => ({ d: `${sleevePetal(A, -1, 15, 30, 16)} ${sleevePetal(A, 1, 15, 30, 16)}` });
-sleeve.short = (A) => ({ d: `${sleevePetal(A, -1, 8, 75, 20)} ${sleevePetal(A, 1, 8, 75, 20)}` });
-sleeve.long = (A) => ({ d: `${sleevePetal(A, -1, 4, 180, 13)} ${sleevePetal(A, 1, 4, 180, 13)}` });
-sleeve.puff = (A) => ({ d: `${sleevePetal(A, -1, 24, 42, 34)} ${sleevePetal(A, 1, 24, 42, 34)}` });
+sleeve.cap = (A) => ({ d: `${sleevePetal(A, -1, 15, 30, 18, 15)} ${sleevePetal(A, 1, 15, 30, 18, 15)}` });
+sleeve.short = (A) => ({ d: `${sleevePetal(A, -1, 8, 75, 20, 11)} ${sleevePetal(A, 1, 8, 75, 20, 11)}` });
+sleeve.long = (A) => ({ d: `${sleevePetal(A, -1, 4, 180, 13, 7)} ${sleevePetal(A, 1, 4, 180, 13, 7)}` });
+sleeve.puff = (A) => ({ d: `${sleevePetal(A, -1, 24, 42, 36, 10)} ${sleevePetal(A, 1, 24, 42, 36, 10)}` });
 // 긴소매와 같은 모양이되, 렌더러가 팔뚝 중간에 점선 탈부착 표시선을 추가로 그린다
 sleeve.detachable = (A) => ({ d: sleeve.long(A).d, detachMarkY: A.shoulderY + 180 * 0.5 });
 // 새 도형을 그리지 않고 기본값(none, 즉 민소매)을 재사용한다 (SPEC.md §3.4, §4 기본값)
@@ -924,6 +934,31 @@ function torsoBase(A) {
       Q ${A.centerX + neckHalf + 8} ${A.shoulderY - 2} ${A.centerX + neckHalf} ${tuckY}
       L ${A.centerX + neckHalf} ${neckTopY}
       Q ${A.centerX} ${neckTopY - 8} ${A.centerX - neckHalf} ${neckTopY} Z`;
+}
+
+// 마네킹 팔 — torsoBase만으로는 어깨 아래가 허전해 보이고, 특히 소매가 두께 없이 평면적으로
+// 보인다는 피드백에 따라 팔 범위까지 마네킹을 늘린다. 어깨점(A.shoulderL/R)에서 시작해
+// 팔꿈치 근처에서 살짝 안쪽으로, 손목(대략 엉덩이 높이)에서 다시 살짝 바깥으로 나가는
+// 자연스러운 팔 자세를 원통형 두께로 표현한다
+function armBase(A, side) {
+  const shoulderX = side === -1 ? A.shoulderL : A.shoulderR;
+  const topHalf = 15;
+  const cuffHalf = 8;
+  const elbowY = A.shoulderY + 110;
+  const wristY = A.shoulderY + 190;
+  const elbowX = shoulderX + side * 6;
+  const wristX = shoulderX + side * 10;
+  const topOuter = shoulderX + side * topHalf * 0.7;
+  const topInner = shoulderX - side * topHalf * 0.3;
+  const botOuter = wristX + side * cuffHalf;
+  const botInner = wristX - side * cuffHalf;
+  return `M ${topInner} ${A.shoulderY}
+      L ${topOuter} ${A.shoulderY}
+      C ${topOuter + side * 10} ${A.shoulderY + 35} ${elbowX + side * (cuffHalf + 4)} ${elbowY - 20} ${elbowX + side * cuffHalf} ${elbowY}
+      C ${elbowX + side * (cuffHalf - 1)} ${elbowY + 25} ${botOuter} ${wristY - 25} ${botOuter} ${wristY}
+      L ${botInner} ${wristY}
+      C ${elbowX - side * (cuffHalf - 1)} ${wristY - 25} ${elbowX - side * cuffHalf} ${elbowY + 25} ${elbowX - side * cuffHalf} ${elbowY}
+      C ${topInner - side * 6} ${elbowY - 20} ${topInner - side * 8} ${A.shoulderY + 35} ${topInner} ${A.shoulderY} Z`;
 }
 
 // 트레인(허리 라인/뒷모습과 함께 §10에서 "그림에 반영 안 함"이었다가, 눌러도 차이가
@@ -1065,11 +1100,17 @@ function buildFullDressSvg(silhouetteId, necklineId, sleeveId, skirtTextureId, b
   const { d: skirtD, waistY, foldLines } = silhouette[silhouetteId](A);
   const { d: bodiceD, detailLines: bodiceDetailLines, overlay: bodiceOverlay } = buildBodice(A, necklineId, waistY);
 
-  // 0. 마네킹 베이스 — 넥라인/보디스보다 먼저 그려서 항상 맨 뒤에 깔린다
+  // 0. 마네킹 베이스 — 넥라인/보디스보다 먼저 그려서 항상 맨 뒤에 깔린다 (팔까지 포함)
   const torsoPath = document.createElementNS(svgNS, 'path');
   torsoPath.setAttribute('d', torsoBase(A));
   torsoPath.setAttribute('class', 'torso-outline');
   svg.appendChild(torsoPath);
+  [-1, 1].forEach((side) => {
+    const armPath = document.createElementNS(svgNS, 'path');
+    armPath.setAttribute('d', armBase(A, side));
+    armPath.setAttribute('class', 'torso-outline');
+    svg.appendChild(armPath);
+  });
 
   // 트레인 — 스커트보다 먼저 그려서 헴 라인 옆/아래로만 살짝 드러나게 한다
   const trainD = buildTrainPath(A, trainId);
