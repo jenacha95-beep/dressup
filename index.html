@@ -31,6 +31,12 @@
     stroke-width: 1;
     stroke-dasharray: 3 2;
   }
+  .fold-line {
+    fill: none;
+    stroke: var(--outline);
+    stroke-width: 0.6;
+    opacity: 0.45;
+  }
 
   /* 공용 */
   .btn {
@@ -386,14 +392,36 @@ const WAIST_ORDER = ['natural', 'drop', 'empire', 'basque', 'other'];
 const BACK_ORDER = ['vback', 'lowback', 'keyhole', 'buttons', 'illusion', 'other'];
 const TRAIN_ORDER = ['none', 'sweep', 'chapel', 'cathedral', 'other'];
 
+// 스커트 안쪽에 그리는 얇은 주름선. 체크포인트(y, leftX, rightX)를 실루엣 path와
+// 동일한 앵커로 만들어 넣으면, 핏 되는 구간에서는 주름선도 좁게 붙고 플레어 구간에서만
+// 벌어져 외곽선과 어긋나지 않는다. fraction 위치(0~1, 폭 안에서 왼쪽부터)마다 한 줄씩
+function buildFoldLine(checkpoints, fraction) {
+  return checkpoints
+    .map(({ y, leftX, rightX }, i) => {
+      const x = leftX + (rightX - leftX) * fraction;
+      return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
+    })
+    .join(' ');
+}
+
+function buildFoldLines(checkpoints, fractions = [0.28, 0.5, 0.72]) {
+  return fractions.map((f) => buildFoldLine(checkpoints, f));
+}
+
 const silhouette = {};
 
 // 골반까지 직선으로 내려가다 완만한 곡선으로 벌어지는 기본 실루엣
 silhouette.aline = (A) => {
   const hemHalf = (A.hipR - A.centerX) + 100;
   const hemL = A.centerX - hemHalf, hemR = A.centerX + hemHalf;
+  const foldLines = buildFoldLines([
+    { y: A.waistY + 6, leftX: A.waistL, rightX: A.waistR },
+    { y: A.hipY, leftX: A.hipL, rightX: A.hipR },
+    { y: A.hemY - 6, leftX: hemL, rightX: hemR },
+  ]);
   return {
     waistY: A.waistY,
+    foldLines,
     d: `M ${A.waistL} ${A.waistY}
         L ${A.hipL} ${A.hipY}
         C ${A.hipL - 15} ${A.hipY + (A.hemY - A.hipY) * 0.35} ${hemL - 10} ${A.hemY - (A.hemY - A.hipY) * 0.35} ${hemL} ${A.hemY}
@@ -407,8 +435,18 @@ silhouette.aline = (A) => {
 silhouette.ballgown = (A) => {
   const hemHalf = (A.hipR - A.centerX) + 145;
   const hemL = A.centerX - hemHalf, hemR = A.centerX + hemHalf;
+  // 볼록한 곡선을 대략 따라가도록 중간 체크포인트를 바깥으로 살짝 밀어둔다
+  const midY = A.waistY + (A.hemY - A.waistY) * 0.55;
+  const waistHalf = A.waistR - A.centerX;
+  const midHalf = waistHalf + (hemHalf - waistHalf) * 0.65;
+  const foldLines = buildFoldLines([
+    { y: A.waistY + 6, leftX: A.waistL, rightX: A.waistR },
+    { y: midY, leftX: A.centerX - midHalf, rightX: A.centerX + midHalf },
+    { y: A.hemY - 6, leftX: hemL, rightX: hemR },
+  ]);
   return {
     waistY: A.waistY,
+    foldLines,
     d: `M ${A.waistL} ${A.waistY}
         C ${A.waistL - 5} ${A.waistY + (A.hemY - A.waistY) * 0.25} ${hemL - 60} ${A.hemY - (A.hemY - A.waistY) * 0.15} ${hemL} ${A.hemY}
         L ${hemR} ${A.hemY}
@@ -422,8 +460,16 @@ silhouette.mermaid = (A) => {
   const kneeL = A.centerX - kneeHalf, kneeR = A.centerX + kneeHalf;
   const hemHalf = (A.hipR - A.centerX) + 125;
   const hemL = A.centerX - hemHalf, hemR = A.centerX + hemHalf;
+  // 힙까지는 좁게, 무릎에서 살짝 더 좁아졌다가 무릎 아래에서만 벌어지는 실제 핏을 그대로 따라간다
+  const foldLines = buildFoldLines([
+    { y: A.waistY + 6, leftX: A.waistL, rightX: A.waistR },
+    { y: A.hipY, leftX: A.hipL, rightX: A.hipR },
+    { y: A.kneeY, leftX: kneeL, rightX: kneeR },
+    { y: A.hemY - 6, leftX: hemL, rightX: hemR },
+  ]);
   return {
     waistY: A.waistY,
+    foldLines,
     d: `M ${A.waistL} ${A.waistY}
         C ${A.waistL - 8} ${A.waistY + (A.hipY - A.waistY) * 0.5} ${A.hipL} ${A.hipY - (A.hipY - A.waistY) * 0.1} ${A.hipL} ${A.hipY}
         L ${kneeL} ${A.kneeY}
@@ -444,8 +490,15 @@ silhouette.trumpet = (A) => {
   const flareStartL = A.centerX - flareHalf, flareStartR = A.centerX + flareHalf;
   const hemHalf = (A.hipR - A.centerX) + 115;
   const hemL = A.centerX - hemHalf, hemR = A.centerX + hemHalf;
+  const foldLines = buildFoldLines([
+    { y: A.waistY + 6, leftX: A.waistL, rightX: A.waistR },
+    { y: A.hipY, leftX: A.hipL, rightX: A.hipR },
+    { y: flareStartY, leftX: flareStartL, rightX: flareStartR },
+    { y: A.hemY - 6, leftX: hemL, rightX: hemR },
+  ]);
   return {
     waistY: A.waistY,
+    foldLines,
     d: `M ${A.waistL} ${A.waistY}
         C ${A.waistL - 8} ${A.waistY + (A.hipY - A.waistY) * 0.5} ${A.hipL} ${A.hipY - (A.hipY - A.waistY) * 0.1} ${A.hipL} ${A.hipY}
         L ${flareStartL} ${flareStartY}
@@ -461,8 +514,14 @@ silhouette.trumpet = (A) => {
 silhouette.sheath = (A) => {
   const hemHalf = (A.hipR - A.centerX) + 8;
   const hemL = A.centerX - hemHalf, hemR = A.centerX + hemHalf;
+  const foldLines = buildFoldLines([
+    { y: A.waistY + 6, leftX: A.waistL, rightX: A.waistR },
+    { y: A.hipY, leftX: A.hipL, rightX: A.hipR },
+    { y: A.hemY - 6, leftX: hemL, rightX: hemR },
+  ]);
   return {
     waistY: A.waistY,
+    foldLines,
     d: `M ${A.waistL} ${A.waistY}
         L ${A.hipL} ${A.hipY}
         L ${hemL} ${A.hemY}
@@ -481,8 +540,13 @@ silhouette.empire = (A) => {
   const waistL = A.centerX - empireHalf, waistR = A.centerX + empireHalf;
   const hemHalf = (A.hipR - A.centerX) + 90;
   const hemL = A.centerX - hemHalf, hemR = A.centerX + hemHalf;
+  const foldLines = buildFoldLines([
+    { y: waistY + 6, leftX: waistL, rightX: waistR },
+    { y: A.hemY - 6, leftX: hemL, rightX: hemR },
+  ]);
   return {
     waistY,
+    foldLines,
     d: `M ${waistL} ${waistY}
         C ${waistL - 5} ${waistY + (A.hemY - waistY) * 0.3} ${hemL - 20} ${A.hemY - (A.hemY - waistY) * 0.3} ${hemL} ${A.hemY}
         L ${hemR} ${A.hemY}
@@ -686,7 +750,7 @@ function buildFullDressSvg(silhouetteId, necklineId, sleeveId, skirtTextureId, b
   const defs = document.createElementNS(svgNS, 'defs');
   svg.appendChild(defs);
 
-  const { d: skirtD, waistY } = silhouette[silhouetteId](A);
+  const { d: skirtD, waistY, foldLines } = silhouette[silhouetteId](A);
   const bodiceD = buildBodice(A, necklineId, waistY);
 
   // 1. 스커트, 2. 보디스 (렌더 순서 SPEC.md §3.3)
@@ -698,6 +762,15 @@ function buildFullDressSvg(silhouetteId, necklineId, sleeveId, skirtTextureId, b
     p.setAttribute('d', d);
     p.setAttribute('fill', registerTexturePattern(svgNS, defs, textureId));
     p.setAttribute('class', 'dress-outline' + (isOther ? ' other' : ''));
+    svg.appendChild(p);
+  });
+
+  // 스커트 위에 얇은 주름선을 얹는다 — 실루엣 도식이 통짜 도형처럼 안 보이게 하는
+  // 디테일용 장식선이라, 좌표/형태 판단에는 영향이 없다 (fill 없이 stroke만)
+  (foldLines || []).forEach((d) => {
+    const p = document.createElementNS(svgNS, 'path');
+    p.setAttribute('d', d);
+    p.setAttribute('class', 'fold-line');
     svg.appendChild(p);
   });
 
@@ -1638,11 +1711,12 @@ function loadImage(src) {
 }
 
 // 내보낼 SVG는 원본 문서와 분리된 독립 리소스로 래스터화되므로, 바깥 <style>의
-// .dress-outline/.detach-mark 클래스 규칙을 못 읽는다 — 값을 그대로 박아 자체완결시킨다
+// .dress-outline/.detach-mark/.fold-line 클래스 규칙을 못 읽는다 — 값을 그대로 박아 자체완결시킨다
 const EXPORT_SVG_STYLE = `
   .dress-outline { stroke: #8A7A6D; stroke-width: 1; }
   .dress-outline.other { stroke-dasharray: 4 3; }
   .detach-mark { stroke: #8A7A6D; stroke-width: 1; stroke-dasharray: 3 2; }
+  .fold-line { fill: none; stroke: #8A7A6D; stroke-width: 0.6; opacity: 0.45; }
 `;
 
 // svg를 지정한 픽셀 크기로 래스터화하기 위해 width/height를 박아 직렬화한다
