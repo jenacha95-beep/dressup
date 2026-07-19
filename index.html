@@ -602,16 +602,18 @@ neckline.square = (A) => {
   };
 };
 
-// 가슴선에서 시작해(어깨는 드러남) 목 가까이 높고 좁은 지점까지 끈이 올라가는 넥라인
+// 가슴선에서 시작해(어깨는 드러남) 목 앞에서 좁아졌다가 작고 둥근 고리(ring) 모양으로
+// 한 번 감기는 넥라인. 뾰족한 V로 모이는 대신 목 부분이 반원으로 둥글게 마감된다
 neckline.halter = (A) => {
-  const peakY = A.neckY + 8;
+  const neckTopY = A.neckY + 6;
+  const neckHalf = 8;
+  const pinchY = A.neckY + 26;
   return {
     strapless: true,
     d: `M ${A.bustL} ${A.bustY}
-        L ${A.centerX - 22} ${A.bustY - 15}
-        L ${A.centerX} ${peakY}
-        L ${A.centerX + 22} ${A.bustY - 15}
-        L ${A.bustR} ${A.bustY}`,
+        Q ${A.centerX - 34} ${A.bustY - 30} ${A.centerX - neckHalf} ${pinchY}
+        C ${A.centerX - neckHalf} ${neckTopY} ${A.centerX + neckHalf} ${neckTopY} ${A.centerX + neckHalf} ${pinchY}
+        Q ${A.centerX + 34} ${A.bustY - 30} ${A.bustR} ${A.bustY}`,
   };
 };
 
@@ -1304,9 +1306,13 @@ function buildSketchSections() {
     ));
   });
 
+  // 텍스처 3종은 이미 참고 메모+이미지(textureRef)로 목록에 없는 원단을 자유롭게
+  // 남길 수 있어서, "기타" 칩은 굳이 안 두기로 함(사용자 요청) — TEXTURE_ORDER 자체는
+  // 인코딩 호환성 때문에 그대로 두고 칩 렌더링에서만 제외한다
+  const TEXTURE_CHIP_ORDER = TEXTURE_ORDER.filter((id) => id !== 'other');
   TEXTURE_CATEGORIES.forEach(({ key, refKey, title }) => {
     wrap.appendChild(buildChipSection(
-      title, TEXTURE_ORDER, sketch[key], LABEL.ko.texture,
+      title, TEXTURE_CHIP_ORDER, sketch[key], LABEL.ko.texture,
       (id) => updateSketchField(key, id), buildTextureSwatch,
       sketch.custom[key], (v) => updateCustomText(key, v),
     ));
