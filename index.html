@@ -391,15 +391,17 @@ const LABEL = {
   },
 };
 
-// enum 순서는 URL 인코딩에 쓰이므로 재배열 금지 (SPEC.md §4)
+// enum 순서는 URL 인코딩에 쓰이므로 재배열 금지 (SPEC.md §4). "기타" 칩은 목록에서
+// 뺐지만(아래 *_CHIP_ORDER), 과거에 저장된 기록과의 인코딩 호환을 위해 값 자체는 남겨둔다
 const SILHOUETTE_ORDER = ['aline', 'ballgown', 'mermaid', 'trumpet', 'sheath', 'empire', 'other'];
+const SILHOUETTE_CHIP_ORDER = SILHOUETTE_ORDER.filter((id) => id !== 'other');
 // jewel/scoop/queenanne/keyhole/highneck/surplice는 사용자가 보내준 넥라인 레퍼런스
 // 시트에서 기존 종류와 겹치지 않는 것만 골라 배열 끝에 추가한 것 — 재배열 금지 규칙 때문에
 // other 뒤에도 새 항목을 이어 붙인다. 칩 표시 순서는 NECKLINE_CHIP_ORDER가 따로 담당한다
 const NECKLINE_ORDER = ['sweetheart', 'v', 'square', 'halter', 'offshoulder', 'bateau', 'illusion', 'straight', 'jewel', 'scoop', 'twisthalter', 'other', 'queenanne', 'keyhole', 'highneck', 'surplice'];
-// 칩 목록에서는 "기타" 커스텀 입력을 맨 끝에 두기 위한 표시 전용 순서 (인코딩에는 NECKLINE_ORDER를 그대로 쓴다)
-const NECKLINE_CHIP_ORDER = [...NECKLINE_ORDER.filter((id) => id !== 'other'), 'other'];
+const NECKLINE_CHIP_ORDER = NECKLINE_ORDER.filter((id) => id !== 'other');
 const SLEEVE_ORDER = ['none', 'cap', 'short', 'long', 'puff', 'detachable', 'other'];
+const SLEEVE_CHIP_ORDER = SLEEVE_ORDER.filter((id) => id !== 'other');
 const TEXTURE_ORDER = ['satin', 'mikado', 'tulle', 'lace', 'organza', 'beaded', 'other'];
 const WAIST_ORDER = ['natural', 'drop', 'empire', 'basque', 'other'];
 const BACK_ORDER = ['vback', 'lowback', 'keyhole', 'buttons', 'illusion', 'other'];
@@ -1431,7 +1433,7 @@ function buildChipSection(title, order, currentValue, labelMap, onSelect, thumbF
 // 시각 파츠(실루엣/넥라인/소매)는 §3.5 크롭 규칙을 그대로 쓴다
 const VISUAL_CATEGORIES = [
   {
-    key: 'silhouette', order: SILHOUETTE_ORDER, title: '실루엣',
+    key: 'silhouette', order: SILHOUETTE_CHIP_ORDER, title: '실루엣',
     thumb: (id) => buildFullDressSvg(id, 'sweetheart', 'none', 'satin', 'satin', 'satin'),
   },
   {
@@ -1443,7 +1445,7 @@ const VISUAL_CATEGORIES = [
     },
   },
   {
-    key: 'sleeve', order: SLEEVE_ORDER, title: '소매',
+    key: 'sleeve', order: SLEEVE_CHIP_ORDER, title: '소매',
     thumb: (id) => {
       const svg = buildFullDressSvg('aline', 'v', id, 'satin', 'satin', 'satin');
       svg.setAttribute('viewBox', '100 100 200 200');
