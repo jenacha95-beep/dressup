@@ -2415,6 +2415,17 @@ async function handleExportSingle(fitting, btnEl) {
 // 실사 렌더링은 이 앱의 스코프 밖("스케치이지 일러스트가 아님" — SPEC.md §0)이라, 대신
 // 지금 고른 항목들을 영문 이미지 생성 AI 프롬프트 문장으로 조립해 복사할 수 있게 한다.
 // "기타" 항목은 직접 입력한 텍스트가 있으면 그 텍스트를, 없으면 영문 라벨을 그대로 쓴다
+// 프롬프트용 원단 묘사 — LABEL.en.texture는 화면/코드 공용 라벨이라 한 단어로 짧지만,
+// 이미지 생성 AI에는 재질감이 그림으로 드러나는 서술형 표현이 더 잘 먹힌다
+const TEXTURE_PROMPT_DESC = {
+  satin: 'smooth glossy satin with a soft liquid sheen',
+  mikado: 'structured mikado silk with body and a subtle matte-glossy finish',
+  tulle: 'sheer, airy tulle netting',
+  lace: 'delicate floral lace appliqué with intricate scalloped patterns',
+  organza: 'crisp, sheer organza with light structured drape',
+  beaded: 'hand-beaded embellishment with shimmering crystal details',
+};
+
 function buildAiPrompt(sketch) {
   const resolve = (category, key) => {
     const value = sketch[key];
@@ -2427,11 +2438,14 @@ function buildAiPrompt(sketch) {
     ['bodice', 'bodiceTexture', 'bodice'],
     ['sleeve', 'sleeveTexture', 'sleeves'],
   ].map(([refKey, textureKey, labelEn]) => {
-    const fabric = resolve('texture', textureKey);
+    const textureId = sketch[textureKey];
+    const fabric = (textureId === 'other' && sketch.custom && sketch.custom[textureKey])
+      || TEXTURE_PROMPT_DESC[textureId]
+      || resolve('texture', textureKey);
     const ref = sketch.textureRef && sketch.textureRef[refKey];
-    const note = ref && ref.note ? ` (${ref.note})` : '';
+    const note = ref && ref.note ? `, matching this reference: ${ref.note}` : '';
     return `${labelEn} in ${fabric}${note}`;
-  }).join(', ');
+  }).join('; ');
 
   return [
     'A professional studio photograph of a couture wedding dress on a headless dress form mannequin, front view, elegant bridal editorial style.',
@@ -2441,8 +2455,9 @@ function buildAiPrompt(sketch) {
     `Waistline: ${resolve('waist', 'waist')}.`,
     `Back: ${resolve('back', 'back')}.`,
     `Train: ${resolve('train', 'train')}.`,
-    `Fabric: ${fabricLine}.`,
-    'Soft studio lighting, ivory and white tones, realistic fabric drape and texture, photorealistic, high detail.',
+    `Fabric by part — ${fabricLine}.`,
+    'Even though each part uses a different fabric, render the whole gown as one cohesive piece: unify the overall color into a single consistent ivory/white tone, with the same soft studio lighting and color grading across the skirt, bodice, and sleeves so no part looks mismatched or pasted-on.',
+    'Soft studio lighting, realistic fabric drape and texture, photorealistic, high detail.',
   ].join(' ');
 }
 
