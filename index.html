@@ -359,7 +359,8 @@ const LABEL = {
     },
     neckline: {
       sweetheart: '스위트하트', v: 'V넥', square: '스퀘어넥', halter: '홀터넥',
-      offshoulder: '오프숄더', bateau: '보트넥', illusion: '일루전', straight: '스트레이트', other: '기타',
+      offshoulder: '오프숄더', bateau: '보트넥', illusion: '일루전', straight: '스트레이트',
+      jewel: '주얼넥', scoop: '스쿱넥', other: '기타',
     },
     sleeve: {
       none: '민소매', cap: '캡소매', short: '반팔', long: '긴소매',
@@ -385,7 +386,9 @@ const LABEL = {
 
 // enum 순서는 URL 인코딩에 쓰이므로 재배열 금지 (SPEC.md §4)
 const SILHOUETTE_ORDER = ['aline', 'ballgown', 'mermaid', 'trumpet', 'sheath', 'empire', 'other'];
-const NECKLINE_ORDER = ['sweetheart', 'v', 'square', 'halter', 'offshoulder', 'bateau', 'illusion', 'straight', 'other'];
+// jewel/scoop는 사용자가 보내준 넥라인 레퍼런스 시트에서 기존 8종과 겹치지 않는 것만
+// 골라 배열 끝에 추가한 것 (SPEC.md §4 — 재배열 금지 규칙 때문에 끝에만 추가)
+const NECKLINE_ORDER = ['sweetheart', 'v', 'square', 'halter', 'offshoulder', 'bateau', 'illusion', 'straight', 'jewel', 'scoop', 'other'];
 const SLEEVE_ORDER = ['none', 'cap', 'short', 'long', 'puff', 'detachable', 'other'];
 const TEXTURE_ORDER = ['satin', 'mikado', 'tulle', 'lace', 'organza', 'beaded', 'other'];
 const WAIST_ORDER = ['natural', 'drop', 'empire', 'basque', 'other'];
@@ -645,6 +648,27 @@ neckline.straight = (A) => {
   return {
     strapless: true,
     d: `M ${A.bustL} ${A.bustY} L ${A.bustR} ${A.bustY}`,
+  };
+};
+
+// 어깨점에서 시작해 목선을 따라 완만하게 둥근 U자로 파이는 라운드 넥라인.
+// 보트넥(아주 얕음)보다는 깊고 스쿱넥(가슴선 가까이 깊음)보다는 얕다
+neckline.jewel = (A) => {
+  const dipY = A.shoulderY + 40;
+  return {
+    strapless: false,
+    d: `M ${A.shoulderL} ${A.shoulderY}
+        Q ${A.centerX} ${dipY} ${A.shoulderR} ${A.shoulderY}`,
+  };
+};
+
+// 어깨점에서 시작해 가슴선 가까이까지 넓고 둥글게 깊이 파이는 U자형 넥라인
+neckline.scoop = (A) => {
+  const dipY = A.shoulderY + 75;
+  return {
+    strapless: false,
+    d: `M ${A.shoulderL} ${A.shoulderY}
+        Q ${A.centerX} ${dipY} ${A.shoulderR} ${A.shoulderY}`,
   };
 };
 

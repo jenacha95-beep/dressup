@@ -136,7 +136,7 @@ Fitting = {
 }
 Sketch = {
   silhouette:     'aline'|'ballgown'|'mermaid'|'trumpet'|'sheath'|'empire'|'other',
-  neckline:       'sweetheart'|'v'|'square'|'halter'|'offshoulder'|'bateau'|'illusion'|'straight'|'other',
+  neckline:       'sweetheart'|'v'|'square'|'halter'|'offshoulder'|'bateau'|'illusion'|'straight'|'jewel'|'scoop'|'other',
   sleeve:         'none'|'cap'|'short'|'long'|'puff'|'detachable'|'other',
   waist:          'natural'|'drop'|'empire'|'basque'|'other',
   back:           'vback'|'lowback'|'keyhole'|'buttons'|'illusion'|'other',
@@ -172,7 +172,7 @@ const LABEL = {
   ko: {
     silhouette: { aline: 'A라인', ballgown: '볼가운', mermaid: '머메이드',
                   trumpet: '트럼펫', sheath: '시스', empire: '엠파이어', other: '기타' },
-    neckline:   { sweetheart: '스위트하트', v: 'V넥', square: '스퀘어넥', ... },
+    neckline:   { sweetheart: '스위트하트', v: 'V넥', square: '스퀘어넥', jewel: '주얼넥', scoop: '스쿱넥', ... },
     texture:    { satin: '새틴', mikado: '미카도', tulle: '튤', lace: '레이스',
                   organza: '오간자', beaded: '비즈', other: '기타' },  // skirtTexture/bodiceTexture/sleeveTexture가 공유
     // ...
