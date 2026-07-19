@@ -262,6 +262,62 @@
   }
   .compare-table tr.row-same td { opacity: 0.45; }
   .compare-table tr.row-diff td { font-weight: 600; }
+
+  /* 공유 링크 다이얼로그 */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 100;
+  }
+  .modal-box {
+    background: var(--bg);
+    border: 1px solid var(--outline);
+    border-radius: 12px;
+    padding: 20px;
+    width: 100%;
+    max-width: 340px;
+  }
+  .modal-title { font-size: 15px; font-weight: 600; margin-bottom: 12px; }
+  .modal-checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+  .modal-note { font-size: 11px; opacity: 0.7; margin: 10px 0; }
+  .modal-link-box { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+  .modal-link-box input { flex: 1 1 160px; font-size: 12px; padding: 6px 8px; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+
+  /* 읽기 전용 공유 뷰 */
+  .shared-screen { padding-bottom: 32px; }
+  .shared-banner {
+    background: var(--outline);
+    color: var(--dress-fill);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .shared-banner .btn { background: var(--dress-fill); color: var(--text); border-color: var(--dress-fill); }
+  .shared-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 12px;
+    border-bottom: 1px solid var(--outline);
+  }
+  .shared-item svg { width: 220px; height: auto; }
+  .shared-item-meta { text-align: center; font-size: 13px; margin: 10px 0; }
+  .shared-item-meta div { margin: 2px 0; }
 </style>
 </head>
 <body>
@@ -590,13 +646,15 @@ sleeve.other = sleeve.none;
 
 // 텍스처: <pattern> 타일로 정의해 fill="url(#...)"로 참조한다 (SPEC.md §3.3). 미묘하게 —
 // 특히 레이스는 튤(균일한 그물망)과 달리 불규칙하게 흩뿌린 작은 점으로 그려 net 무늬로 안 보이게 한다
+// 배경색은 var(--dress-fill)이 아니라 실제 값을 그대로 쓴다 — 이미지 내보내기(§5.1)에서
+// SVG를 독립 리소스로 직렬화하면 원본 문서의 CSS 변수를 못 읽어 검게 나오는 문제가 있었다
 const TEXTURE_TILE = {
-  satin:   { size: 40, html: '<rect width="40" height="40" fill="var(--dress-fill)"/><line x1="0" y1="40" x2="40" y2="0" stroke="#00000012" stroke-width="8"/>' },
-  mikado:  { size: 20, html: '<rect width="20" height="20" fill="var(--dress-fill)"/><line x1="0" y1="0" x2="20" y2="20" stroke="#00000010" stroke-width="1"/><line x1="20" y1="0" x2="0" y2="20" stroke="#00000010" stroke-width="1"/>' },
-  tulle:   { size: 14, html: '<rect width="14" height="14" fill="var(--dress-fill)"/><path d="M0 0 L14 14 M14 0 L0 14" stroke="#00000018" stroke-width="0.6"/>' },
-  lace:    { size: 22, html: '<rect width="22" height="22" fill="var(--dress-fill)"/><circle cx="4" cy="5" r="1.2" fill="#00000022"/><circle cx="15" cy="3" r="0.8" fill="#0000001a"/><circle cx="9" cy="13" r="1.4" fill="#00000022"/><circle cx="18" cy="17" r="1" fill="#0000001a"/><circle cx="3" cy="18" r="0.9" fill="#00000018"/>' },
-  organza: { size: 10, html: '<rect width="10" height="10" fill="var(--dress-fill)"/><line x1="0" y1="0" x2="0" y2="10" stroke="#00000014" stroke-width="0.5"/><line x1="0" y1="0" x2="10" y2="0" stroke="#00000014" stroke-width="0.5"/>' },
-  beaded:  { size: 26, html: '<rect width="26" height="26" fill="var(--dress-fill)"/><circle cx="13" cy="13" r="1.8" fill="#00000028"/><circle cx="12.3" cy="12.3" r="0.6" fill="#ffffff90"/>' },
+  satin:   { size: 40, html: '<rect width="40" height="40" fill="#FBF8F4"/><line x1="0" y1="40" x2="40" y2="0" stroke="#00000012" stroke-width="8"/>' },
+  mikado:  { size: 20, html: '<rect width="20" height="20" fill="#FBF8F4"/><line x1="0" y1="0" x2="20" y2="20" stroke="#00000010" stroke-width="1"/><line x1="20" y1="0" x2="0" y2="20" stroke="#00000010" stroke-width="1"/>' },
+  tulle:   { size: 14, html: '<rect width="14" height="14" fill="#FBF8F4"/><path d="M0 0 L14 14 M14 0 L0 14" stroke="#00000018" stroke-width="0.6"/>' },
+  lace:    { size: 22, html: '<rect width="22" height="22" fill="#FBF8F4"/><circle cx="4" cy="5" r="1.2" fill="#00000022"/><circle cx="15" cy="3" r="0.8" fill="#0000001a"/><circle cx="9" cy="13" r="1.4" fill="#00000022"/><circle cx="18" cy="17" r="1" fill="#0000001a"/><circle cx="3" cy="18" r="0.9" fill="#00000018"/>' },
+  organza: { size: 10, html: '<rect width="10" height="10" fill="#FBF8F4"/><line x1="0" y1="0" x2="0" y2="10" stroke="#00000014" stroke-width="0.5"/><line x1="0" y1="0" x2="10" y2="0" stroke="#00000014" stroke-width="0.5"/>' },
+  beaded:  { size: 26, html: '<rect width="26" height="26" fill="#FBF8F4"/><circle cx="13" cy="13" r="1.8" fill="#00000028"/><circle cx="12.3" cy="12.3" r="0.6" fill="#ffffff90"/>' },
 };
 TEXTURE_TILE.other = TEXTURE_TILE.satin; // 새 도형 없이 기본값(satin) 재사용 (SPEC.md §4 기본값)
 
@@ -744,6 +802,8 @@ let state = {
   uiCollapsed: { fitNote: true, memo: true },
   compareMode: false, // 목록 화면의 "비교하기" 선택 모드 여부
   compareSelection: [], // 비교 선택된 fitting id, 최대 3개
+  shared: null, // URL 해시로 들어온 읽기 전용 공유 데이터 { items: [...] }
+  shareDialog: null, // 공유 링크 다이얼로그 열림 상태 { mode, fittingIds, includeShopName, ... }
 };
 
 function todayStr() {
@@ -837,8 +897,13 @@ function render() {
     app.appendChild(buildRecordScreen());
   } else if (state.view === 'compare' && state.compareSelection.length >= 2) {
     app.appendChild(buildCompareScreen());
+  } else if (state.view === 'shared' && state.shared) {
+    app.appendChild(buildSharedScreen());
   } else {
     app.appendChild(buildListScreen());
+  }
+  if (state.shareDialog) {
+    app.appendChild(buildShareDialog());
   }
 }
 
@@ -862,6 +927,22 @@ function buildRecordScreen() {
   backBtn.setAttribute('aria-label', '목록으로 돌아가기');
   backBtn.addEventListener('click', backToList);
   topBar.appendChild(backBtn);
+
+  const actions = document.createElement('div');
+  actions.className = 'top-bar-actions';
+  const shareBtn = document.createElement('button');
+  shareBtn.type = 'button';
+  shareBtn.className = 'btn';
+  shareBtn.textContent = '링크 공유';
+  shareBtn.addEventListener('click', () => shareSingleFitting(state.current));
+  actions.appendChild(shareBtn);
+  const exportBtn = document.createElement('button');
+  exportBtn.type = 'button';
+  exportBtn.className = 'btn';
+  exportBtn.textContent = '이미지 저장';
+  exportBtn.addEventListener('click', () => handleExportSingle(state.current));
+  actions.appendChild(exportBtn);
+  topBar.appendChild(actions);
   wrap.appendChild(topBar);
 
   const preview = document.createElement('div');
@@ -1438,6 +1519,10 @@ function buildCompareScreen() {
   const wrap = document.createElement('div');
   wrap.className = 'compare-screen';
 
+  const fittings = state.compareSelection
+    .map((id) => state.store.fittings.find((f) => f.id === id))
+    .filter(Boolean);
+
   const topBar = document.createElement('div');
   topBar.className = 'top-bar';
   const backBtn = document.createElement('button');
@@ -1446,15 +1531,23 @@ function buildCompareScreen() {
   backBtn.textContent = '← 목록';
   backBtn.addEventListener('click', backToListFromCompare);
   topBar.appendChild(backBtn);
-  const title = document.createElement('span');
-  title.className = 'title';
-  title.textContent = '비교';
-  topBar.appendChild(title);
-  wrap.appendChild(topBar);
 
-  const fittings = state.compareSelection
-    .map((id) => state.store.fittings.find((f) => f.id === id))
-    .filter(Boolean);
+  const actions = document.createElement('div');
+  actions.className = 'top-bar-actions';
+  const shareBtn = document.createElement('button');
+  shareBtn.type = 'button';
+  shareBtn.className = 'btn';
+  shareBtn.textContent = '링크 공유';
+  shareBtn.addEventListener('click', shareCompareSet);
+  actions.appendChild(shareBtn);
+  const exportBtn = document.createElement('button');
+  exportBtn.type = 'button';
+  exportBtn.className = 'btn';
+  exportBtn.textContent = '이미지 저장';
+  exportBtn.addEventListener('click', () => handleExportCompareClick(fittings));
+  actions.appendChild(exportBtn);
+  topBar.appendChild(actions);
+  wrap.appendChild(topBar);
 
   wrap.appendChild(buildComparePreviewRow(fittings));
   wrap.appendChild(buildCompareTable(fittings));
@@ -1520,6 +1613,569 @@ function buildCompareTable(fittings) {
 
   return table;
 }
+
+// ── 이미지 내보내기 (SPEC.md §5.1) ─────────────────────────────────────────
+const CANVAS_COLORS = { bg: '#EDE7E0', outline: '#8A7A6D', text: '#4A3F36' };
+
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+// 내보낼 SVG는 원본 문서와 분리된 독립 리소스로 래스터화되므로, 바깥 <style>의
+// .dress-outline/.detach-mark 클래스 규칙을 못 읽는다 — 값을 그대로 박아 자체완결시킨다
+const EXPORT_SVG_STYLE = `
+  .dress-outline { stroke: #8A7A6D; stroke-width: 1; }
+  .dress-outline.other { stroke-dasharray: 4 3; }
+  .detach-mark { stroke: #8A7A6D; stroke-width: 1; stroke-dasharray: 3 2; }
+`;
+
+// svg를 지정한 픽셀 크기로 래스터화하기 위해 width/height를 박아 직렬화한다
+// (viewBox만 있으면 브라우저가 임의의 기본 크기로 그려버릴 수 있다)
+async function loadSvgAsImage(svgEl, pixelW, pixelH) {
+  const clone = svgEl.cloneNode(true);
+  clone.setAttribute('width', pixelW);
+  clone.setAttribute('height', pixelH);
+  clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+  const styleEl = document.createElementNS('http://www.w3.org/2000/svg', 'style');
+  styleEl.textContent = EXPORT_SVG_STYLE;
+  clone.insertBefore(styleEl, clone.firstChild);
+  const svgStr = new XMLSerializer().serializeToString(clone);
+  const dataUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgStr);
+  return loadImage(dataUrl);
+}
+
+function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+  const words = text.split(' ');
+  let line = '';
+  let lineY = y;
+  words.forEach((word) => {
+    const test = line ? `${line} ${word}` : word;
+    if (line && ctx.measureText(test).width > maxWidth) {
+      ctx.fillText(line, x, lineY);
+      line = word;
+      lineY += lineHeight;
+    } else {
+      line = test;
+    }
+  });
+  if (line) ctx.fillText(line, x, lineY);
+  return lineY + lineHeight;
+}
+
+const TEXTURE_REF_PARTS = [
+  { key: 'skirt', label: '스커트' },
+  { key: 'bodice', label: '보디스' },
+  { key: 'sleeve', label: '소매' },
+];
+
+// textureRef 참고 메모+이미지를 드레스 그림 옆에 작은 스와치로 그려 넣는다 (SPEC.md §5.1).
+// 참고가 하나도 없으면 아무것도 그리지 않는다
+async function drawTextureRefRow(ctx, textureRef, x, y, rowWidth) {
+  const parts = TEXTURE_REF_PARTS.filter(({ key }) => {
+    const ref = textureRef[key];
+    return ref && (ref.image || ref.note);
+  });
+  if (parts.length === 0) return;
+
+  const cellW = rowWidth / parts.length;
+  const imgSize = 64;
+
+  for (let i = 0; i < parts.length; i++) {
+    const { key, label } = parts[i];
+    const ref = textureRef[key];
+    const cx = x + i * cellW + cellW / 2;
+
+    ctx.fillStyle = CANVAS_COLORS.text;
+    ctx.textAlign = 'center';
+    ctx.font = 'bold 12px sans-serif';
+    ctx.fillText(label, cx, y);
+
+    let nextY = y + 10;
+    if (ref.image) {
+      const img = await loadImage(ref.image);
+      ctx.drawImage(img, cx - imgSize / 2, nextY, imgSize, imgSize);
+      ctx.strokeStyle = CANVAS_COLORS.outline;
+      ctx.lineWidth = 1;
+      ctx.strokeRect(cx - imgSize / 2, nextY, imgSize, imgSize);
+      nextY += imgSize + 14;
+    }
+    if (ref.note) {
+      ctx.font = '11px sans-serif';
+      ctx.fillStyle = CANVAS_COLORS.text;
+      wrapText(ctx, ref.note, cx, nextY, cellW - 8, 13);
+    }
+  }
+}
+
+function hasAnyTextureRef(textureRef) {
+  return TEXTURE_REF_PARTS.some(({ key }) => {
+    const ref = textureRef[key];
+    return ref && (ref.image || ref.note);
+  });
+}
+
+// 단일 드레스 한 장 — 드레스 그림 + 매장명/드레스명/별점 + (있으면) 참고 스와치
+async function exportFittingImage(fitting) {
+  const scale = 2;
+  const baseW = 480;
+  const dressW = 260;
+  const dressH = Math.round(dressW * (700 / 400));
+  const headerH = 56;
+  const refRowH = 130;
+  const hasRef = hasAnyTextureRef(fitting.sketch.textureRef);
+  const totalH = headerH + dressH + (hasRef ? refRowH : 16);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = baseW * scale;
+  canvas.height = totalH * scale;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(scale, scale);
+
+  ctx.fillStyle = CANVAS_COLORS.bg;
+  ctx.fillRect(0, 0, baseW, totalH);
+
+  ctx.fillStyle = CANVAS_COLORS.text;
+  ctx.textAlign = 'left';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.fillText(fitting.shopName || '(매장명 없음)', 16, 26);
+  ctx.font = '13px sans-serif';
+  ctx.fillText(fitting.dressName || '', 16, 46);
+  ctx.textAlign = 'right';
+  ctx.font = '14px sans-serif';
+  ctx.fillText(fitting.rating ? '★'.repeat(fitting.rating) : '', baseW - 16, 26);
+
+  const dressImg = await loadSvgAsImage(buildPreviewSvg(fitting.sketch), dressW * scale, dressH * scale);
+  ctx.drawImage(dressImg, (baseW - dressW) / 2, headerH, dressW, dressH);
+
+  if (hasRef) {
+    await drawTextureRefRow(ctx, fitting.sketch.textureRef, 16, headerH + dressH + 26, baseW - 32);
+  }
+
+  return canvas;
+}
+
+// 비교 화면 한 장 — 최대 3벌 나란히 + 속성 표 (강조/흐림 그대로 반영)
+async function exportCompareImage(fittings) {
+  const scale = 2;
+  const cellW = 150;
+  const dressH = Math.round(cellW * (700 / 400));
+  const gap = 16;
+  const baseW = cellW * fittings.length + gap * (fittings.length + 1);
+  const labelW = 90;
+  const tableRowH = 20;
+  const tableTop = dressH + 40;
+  const totalH = tableTop + COMPARE_ROWS.length * tableRowH + 20;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = baseW * scale;
+  canvas.height = totalH * scale;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(scale, scale);
+
+  ctx.fillStyle = CANVAS_COLORS.bg;
+  ctx.fillRect(0, 0, baseW, totalH);
+
+  for (let i = 0; i < fittings.length; i++) {
+    const f = fittings[i];
+    const x = gap + i * (cellW + gap);
+    const img = await loadSvgAsImage(buildPreviewSvg(f.sketch), cellW * scale, dressH * scale);
+    ctx.drawImage(img, x, 0, cellW, dressH);
+    ctx.fillStyle = CANVAS_COLORS.text;
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(f.dressName || '(이름 없음)', x + cellW / 2, dressH + 16);
+  }
+
+  const colsW = baseW - gap * 2 - labelW;
+  const colW = colsW / fittings.length;
+  let y = tableTop + 14;
+  COMPARE_ROWS.forEach(({ label, get }) => {
+    const values = fittings.map(get);
+    const allSame = values.every((v) => v === values[0]);
+    ctx.globalAlpha = allSame ? 0.5 : 1;
+    ctx.fillStyle = CANVAS_COLORS.text;
+    ctx.font = (allSame ? '' : 'bold ') + '11px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(label, gap, y);
+    values.forEach((v, i) => {
+      const cx = gap + labelW + i * colW + colW / 2;
+      ctx.textAlign = 'center';
+      ctx.fillText(v, cx, y);
+    });
+    ctx.globalAlpha = 1;
+    y += tableRowH;
+  });
+
+  return canvas;
+}
+
+function canvasToBlobPromise(canvas) {
+  return new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+}
+
+// 저장 후 navigator.share가 되면 공유 시트, 아니면 다운로드로 폴백 (SPEC.md §5.1).
+// 인앱 갤러리는 만들지 않는다 — 결과물은 기기 사진첩에 쌓인다
+async function shareOrDownloadCanvas(canvas, filename) {
+  const blob = await canvasToBlobPromise(canvas);
+  const file = new File([blob], filename, { type: 'image/png' });
+
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file] });
+      return;
+    } catch (e) {
+      // 사용자가 공유 시트를 취소한 경우 등 — 다운로드로 폴백
+    }
+  }
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function handleExportSingle(fitting) {
+  const canvas = await exportFittingImage(fitting);
+  await shareOrDownloadCanvas(canvas, `dress-${todayStr()}.png`);
+}
+
+async function handleExportCompareClick(fittings) {
+  const canvas = await exportCompareImage(fittings);
+  await shareOrDownloadCanvas(canvas, `dress-compare-${todayStr()}.png`);
+}
+
+// ── 스케치 코드 인코딩 (SPEC.md §5.2) ──────────────────────────────────────
+const CODE_ALPHABET = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+const SKETCH_CODE_VERSION = '1';
+// 분류 순서는 절대 재배열하지 않는다 — 이미 나간 링크의 인코딩이 깨진다
+const SKETCH_CODE_CATEGORIES = [
+  { key: 'silhouette', order: SILHOUETTE_ORDER },
+  { key: 'neckline', order: NECKLINE_ORDER },
+  { key: 'sleeve', order: SLEEVE_ORDER },
+  { key: 'waist', order: WAIST_ORDER },
+  { key: 'back', order: BACK_ORDER },
+  { key: 'train', order: TRAIN_ORDER },
+  { key: 'skirtTexture', order: TEXTURE_ORDER },
+  { key: 'bodiceTexture', order: TEXTURE_ORDER },
+  { key: 'sleeveTexture', order: TEXTURE_ORDER },
+];
+
+function encodeSketch(sketch) {
+  let code = SKETCH_CODE_VERSION;
+  SKETCH_CODE_CATEGORIES.forEach(({ key, order }) => {
+    const idx = order.indexOf(sketch[key]);
+    code += CODE_ALPHABET[idx >= 0 ? idx : 0];
+  });
+  return code;
+}
+
+// 디코딩 실패 시 null을 반환한다 — 호출부가 "링크를 읽을 수 없습니다"로 처리 (SPEC.md §5.2)
+function decodeSketch(code) {
+  if (typeof code !== 'string' || code.length !== 1 + SKETCH_CODE_CATEGORIES.length) return null;
+  if (code[0] !== SKETCH_CODE_VERSION) return null;
+
+  const sketch = defaultSketch();
+  for (let i = 0; i < SKETCH_CODE_CATEGORIES.length; i++) {
+    const { key, order } = SKETCH_CODE_CATEGORIES[i];
+    const idx = CODE_ALPHABET.indexOf(code[1 + i]);
+    if (idx < 0 || idx >= order.length) return null;
+    sketch[key] = order[idx];
+  }
+  return sketch;
+}
+
+// base64url: +/ → -_, 패딩(=) 제거. TextEncoder/Decoder로 UTF-8을 안전하게 다룬다
+function base64UrlEncode(str) {
+  const bytes = new TextEncoder().encode(str);
+  let binary = '';
+  bytes.forEach((b) => { binary += String.fromCharCode(b); });
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function base64UrlDecode(str) {
+  let b64 = str.replace(/-/g, '+').replace(/_/g, '/');
+  while (b64.length % 4) b64 += '=';
+  const binary = atob(b64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
+}
+
+function buildSketchShareUrl(sketch) {
+  const url = new URL(window.location.href);
+  url.hash = `d=${encodeSketch(sketch)}`;
+  return url.toString();
+}
+
+// 최대 10벌. custom 텍스트와 textureRef는 크기 때문에 URL에 절대 포함하지 않는다 (SPEC.md §5.2)
+function buildMultiShareUrl(fittings, opts) {
+  const compact = fittings.map((f) => [
+    encodeSketch(f.sketch),
+    opts.includeShopName ? (f.shopName || '') : '',
+    opts.includeDressName ? (f.dressName || '') : '',
+    opts.includeRating ? (f.rating || null) : null,
+  ]);
+  const url = new URL(window.location.href);
+  url.hash = `s=${base64UrlEncode(JSON.stringify(compact))}`;
+  return url.toString();
+}
+
+// ── 공유 링크 다이얼로그 ────────────────────────────────────────────────────
+function shareSingleFitting(fitting) {
+  state.shareDialog = { mode: 'single', fittingIds: [fitting.id] };
+  render();
+}
+
+function shareCompareSet() {
+  state.shareDialog = {
+    mode: 'multi',
+    fittingIds: [...state.compareSelection],
+    includeShopName: true,
+    includeDressName: true,
+    includeRating: true,
+  };
+  render();
+}
+
+function closeShareDialog() {
+  state.shareDialog = null;
+  render();
+}
+
+function renderShareLink(fittingIds, linkBox) {
+  const fittings = fittingIds.map((id) => state.store.fittings.find((f) => f.id === id)).filter(Boolean);
+  if (fittings.length === 0) return;
+
+  if (fittings.length > 10) {
+    linkBox.textContent = '10벌을 초과했습니다. 이미지나 파일로 공유해주세요.';
+    return;
+  }
+
+  const url = fittings.length === 1
+    ? buildSketchShareUrl(fittings[0].sketch)
+    : buildMultiShareUrl(fittings, state.shareDialog);
+
+  linkBox.innerHTML = '';
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.readOnly = true;
+  input.value = url;
+  linkBox.appendChild(input);
+
+  const copyBtn = document.createElement('button');
+  copyBtn.type = 'button';
+  copyBtn.className = 'btn';
+  copyBtn.textContent = '복사';
+  copyBtn.addEventListener('click', () => {
+    navigator.clipboard.writeText(url).then(() => { copyBtn.textContent = '복사됨 ✓'; });
+  });
+  linkBox.appendChild(copyBtn);
+
+  if (navigator.share) {
+    const shareBtn = document.createElement('button');
+    shareBtn.type = 'button';
+    shareBtn.className = 'btn primary';
+    shareBtn.textContent = '공유';
+    shareBtn.addEventListener('click', () => navigator.share({ url }));
+    linkBox.appendChild(shareBtn);
+  }
+}
+
+// 공유 전 포함 항목 선택 (SPEC.md §5.2) — 단일 공유는 코드만 담겨 토글할 항목이 없다
+function buildShareDialog() {
+  const { mode, fittingIds } = state.shareDialog;
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeShareDialog(); });
+
+  const box = document.createElement('div');
+  box.className = 'modal-box';
+
+  const title = document.createElement('div');
+  title.className = 'modal-title';
+  title.textContent = mode === 'multi' ? '공유 항목 선택' : '공유 링크';
+  box.appendChild(title);
+
+  if (mode === 'multi') {
+    [
+      { key: 'includeShopName', label: '매장명 포함' },
+      { key: 'includeDressName', label: '드레스명 포함' },
+      { key: 'includeRating', label: '별점 포함' },
+    ].forEach(({ key, label }) => {
+      const row = document.createElement('label');
+      row.className = 'modal-checkbox-row';
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.checked = state.shareDialog[key];
+      cb.addEventListener('change', (e) => { state.shareDialog[key] = e.target.checked; });
+      row.appendChild(cb);
+      row.appendChild(document.createTextNode(label));
+      box.appendChild(row);
+    });
+  }
+
+  const note = document.createElement('p');
+  note.className = 'modal-note';
+  note.textContent = '메모·착용감·참고 이미지는 공유 링크에 포함되지 않습니다.';
+  box.appendChild(note);
+
+  const linkBox = document.createElement('div');
+  linkBox.className = 'modal-link-box';
+  box.appendChild(linkBox);
+
+  const actions = document.createElement('div');
+  actions.className = 'modal-actions';
+  const closeBtn = document.createElement('button');
+  closeBtn.type = 'button';
+  closeBtn.className = 'btn';
+  closeBtn.textContent = '닫기';
+  closeBtn.addEventListener('click', closeShareDialog);
+  actions.appendChild(closeBtn);
+
+  if (mode === 'multi') {
+    const makeBtn = document.createElement('button');
+    makeBtn.type = 'button';
+    makeBtn.className = 'btn primary';
+    makeBtn.textContent = '링크 만들기';
+    makeBtn.addEventListener('click', () => renderShareLink(fittingIds, linkBox));
+    actions.appendChild(makeBtn);
+  }
+
+  box.appendChild(actions);
+  overlay.appendChild(box);
+
+  if (mode === 'single') {
+    renderShareLink(fittingIds, linkBox);
+  }
+
+  return overlay;
+}
+
+// ── 읽기 전용 공유 뷰 (SPEC.md §6.5) ───────────────────────────────────────
+function parseSharedFromHash() {
+  const hash = window.location.hash.slice(1);
+  if (!hash) return null;
+  const params = new URLSearchParams(hash);
+
+  if (params.has('d')) {
+    const sketch = decodeSketch(params.get('d'));
+    if (!sketch) return { error: true };
+    return { items: [{ sketch, shopName: '', dressName: '', rating: null }] };
+  }
+
+  if (params.has('s')) {
+    try {
+      const arr = JSON.parse(base64UrlDecode(params.get('s')));
+      const items = arr.map(([code, shopName, dressName, rating]) => {
+        const sketch = decodeSketch(code);
+        if (!sketch) throw new Error('invalid code');
+        return { sketch, shopName: shopName || '', dressName: dressName || '', rating: rating || null };
+      });
+      return { items };
+    } catch (e) {
+      return { error: true };
+    }
+  }
+
+  return null;
+}
+
+function textEl(tag, text) {
+  const el = document.createElement(tag);
+  el.textContent = text;
+  return el;
+}
+
+function buildSharedScreen() {
+  const wrap = document.createElement('div');
+  wrap.className = 'shared-screen';
+
+  const banner = document.createElement('div');
+  banner.className = 'shared-banner';
+  banner.appendChild(textEl('span', '공유받은 기록입니다'));
+  const exitBtn = document.createElement('button');
+  exitBtn.type = 'button';
+  exitBtn.className = 'btn';
+  exitBtn.textContent = '내 목록 보기';
+  exitBtn.addEventListener('click', exitSharedView);
+  banner.appendChild(exitBtn);
+  wrap.appendChild(banner);
+
+  state.shared.items.forEach((item) => wrap.appendChild(buildSharedItem(item)));
+  return wrap;
+}
+
+function buildSharedItem(item) {
+  const card = document.createElement('div');
+  card.className = 'shared-item';
+  card.appendChild(buildPreviewSvg(item.sketch));
+
+  if (item.shopName || item.dressName || item.rating) {
+    const meta = document.createElement('div');
+    meta.className = 'shared-item-meta';
+    if (item.shopName) meta.appendChild(textEl('div', item.shopName));
+    if (item.dressName) meta.appendChild(textEl('div', item.dressName));
+    if (item.rating) meta.appendChild(textEl('div', '★'.repeat(item.rating)));
+    card.appendChild(meta);
+  }
+
+  const addBtn = document.createElement('button');
+  addBtn.type = 'button';
+  addBtn.className = 'btn primary';
+  addBtn.textContent = '내 목록에 추가';
+  addBtn.addEventListener('click', () => {
+    addSharedItemToStore(item);
+    addBtn.textContent = '추가됨 ✓';
+    addBtn.disabled = true;
+  });
+  card.appendChild(addBtn);
+
+  return card;
+}
+
+// 명시적으로 눌러야 저장된다 — 기존 데이터를 절대 덮어쓰지 않는다 (SPEC.md §5.2)
+function addSharedItemToStore(item) {
+  const fitting = {
+    id: crypto.randomUUID(),
+    shopName: item.shopName || '',
+    visitedAt: todayStr(),
+    dressName: item.dressName || '',
+    priceKrw: null,
+    rating: item.rating || null,
+    memo: '',
+    fitNote: '',
+    sketch: item.sketch,
+  };
+  state.store.fittings.push(fitting);
+  persistStore();
+}
+
+function exitSharedView() {
+  state.view = 'list';
+  state.shared = null;
+  history.replaceState(null, '', window.location.pathname + window.location.search);
+  render();
+}
+
+// 페이지 로드시 공유 링크로 들어왔는지 확인. 디코딩 실패해도 앱이 깨지지 않고
+// 안내 후 일반 화면으로 진입한다 (SPEC.md §5.2)
+(function initSharedViewFromHash() {
+  const result = parseSharedFromHash();
+  if (!result) return;
+  if (result.error) {
+    alert('링크를 읽을 수 없습니다.');
+    return;
+  }
+  state.shared = result;
+  state.view = 'shared';
+})();
 
 render();
 </script>
