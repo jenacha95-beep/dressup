@@ -69,8 +69,10 @@
   }
   .top-bar {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
+    gap: 8px;
     padding: 10px 12px;
     border-bottom: 1px solid var(--outline);
   }
@@ -219,7 +221,7 @@
     border-top: 1px solid var(--outline);
     margin-top: 12px;
   }
-  .top-bar-actions { display: flex; gap: 8px; }
+  .top-bar-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
   .btn:disabled { opacity: 0.4; cursor: not-allowed; }
   .fitting-item.selected-for-compare {
     background: #ffffffaa;
@@ -392,6 +394,42 @@ const LABEL = {
     },
     train: {
       none: '없음', sweep: '스윕 트레인', chapel: '채플 트레인', cathedral: '캐시드럴 트레인', other: '기타',
+    },
+  },
+  // AI 이미지 생성 프롬프트 조립 전용 영문 라벨 (SPEC.md §5.3) — 화면에는 노출되지 않는다
+  en: {
+    silhouette: {
+      aline: 'A-line', ballgown: 'ball gown', mermaid: 'mermaid', trumpet: 'trumpet',
+      sheath: 'sheath', empire: 'empire', other: 'custom silhouette',
+    },
+    neckline: {
+      sweetheart: 'sweetheart neckline', v: 'V-neck', square: 'square neckline',
+      halter: 'halter neckline', offshoulder: 'off-the-shoulder neckline',
+      bateau: 'bateau (boat) neckline', illusion: 'illusion neckline',
+      straight: 'straight-across neckline', jewel: 'jewel neckline', scoop: 'scoop neckline',
+      twisthalter: 'twist halter neckline', queenanne: 'Queen Anne neckline',
+      keyhole: 'keyhole neckline', highneck: 'high neckline', surplice: 'surplice (wrap) neckline',
+      other: 'custom neckline',
+    },
+    sleeve: {
+      none: 'sleeveless', cap: 'cap sleeves', short: 'short sleeves', long: 'long sleeves',
+      puff: 'puff sleeves', detachable: 'detachable sleeves', other: 'custom sleeves',
+    },
+    texture: {
+      satin: 'satin', mikado: 'mikado silk', tulle: 'tulle', lace: 'lace',
+      organza: 'organza', beaded: 'beaded embellishment', other: 'custom fabric',
+    },
+    waist: {
+      natural: 'natural waistline', drop: 'dropped waistline', empire: 'empire waistline',
+      basque: 'basque waistline', other: 'custom waistline',
+    },
+    back: {
+      vback: 'V-back', lowback: 'low back', keyhole: 'keyhole back',
+      buttons: 'button-detailed back', illusion: 'illusion back', other: 'custom back',
+    },
+    train: {
+      none: 'no train', sweep: 'sweep train', chapel: 'chapel train',
+      cathedral: 'cathedral train', other: 'custom train',
     },
   },
 };
@@ -1425,6 +1463,13 @@ function buildRecordScreen() {
   exportBtn.textContent = '이미지 복사';
   exportBtn.addEventListener('click', () => handleExportSingle(state.current, exportBtn));
   actions.appendChild(exportBtn);
+  const aiPromptBtn = document.createElement('button');
+  aiPromptBtn.type = 'button';
+  aiPromptBtn.className = 'btn';
+  aiPromptBtn.textContent = 'AI 프롬프트 복사';
+  aiPromptBtn.setAttribute('aria-label', '이 스케치를 설명하는 이미지 생성 AI 프롬프트를 영문으로 복사');
+  aiPromptBtn.addEventListener('click', () => handleCopyAiPrompt(state.current.sketch, aiPromptBtn));
+  actions.appendChild(aiPromptBtn);
   topBar.appendChild(actions);
   wrap.appendChild(topBar);
 
@@ -2354,10 +2399,10 @@ async function copyCanvasToClipboard(canvas, filename) {
 }
 
 // 클릭한 버튼 자신에 결과를 잠깐 표시해 복사됐는지 바로 알 수 있게 한다
-function flashButtonResult(btnEl, copied) {
+function flashButtonResult(btnEl, copied, failText) {
   if (!btnEl) return;
   const original = btnEl.textContent;
-  btnEl.textContent = copied ? '복사됨 ✓' : '다운로드됨';
+  btnEl.textContent = copied ? '복사됨 ✓' : (failText || '다운로드됨');
   setTimeout(() => { btnEl.textContent = original; }, 1500);
 }
 
@@ -2365,6 +2410,50 @@ async function handleExportSingle(fitting, btnEl) {
   const canvas = await exportFittingImage(fitting);
   const copied = await copyCanvasToClipboard(canvas, `dress-${todayStr()}.png`);
   flashButtonResult(btnEl, copied);
+}
+
+// 실사 렌더링은 이 앱의 스코프 밖("스케치이지 일러스트가 아님" — SPEC.md §0)이라, 대신
+// 지금 고른 항목들을 영문 이미지 생성 AI 프롬프트 문장으로 조립해 복사할 수 있게 한다.
+// "기타" 항목은 직접 입력한 텍스트가 있으면 그 텍스트를, 없으면 영문 라벨을 그대로 쓴다
+function buildAiPrompt(sketch) {
+  const resolve = (category, key) => {
+    const value = sketch[key];
+    if (value === 'other' && sketch.custom && sketch.custom[key]) return sketch.custom[key];
+    return (LABEL.en[category] && LABEL.en[category][value]) || value;
+  };
+
+  const fabricLine = [
+    ['skirt', 'skirtTexture', 'skirt'],
+    ['bodice', 'bodiceTexture', 'bodice'],
+    ['sleeve', 'sleeveTexture', 'sleeves'],
+  ].map(([refKey, textureKey, labelEn]) => {
+    const fabric = resolve('texture', textureKey);
+    const ref = sketch.textureRef && sketch.textureRef[refKey];
+    const note = ref && ref.note ? ` (${ref.note})` : '';
+    return `${labelEn} in ${fabric}${note}`;
+  }).join(', ');
+
+  return [
+    'A professional studio photograph of a couture wedding dress on a headless dress form mannequin, front view, elegant bridal editorial style.',
+    `Silhouette: ${resolve('silhouette', 'silhouette')}.`,
+    `Neckline: ${resolve('neckline', 'neckline')}.`,
+    `Sleeves: ${resolve('sleeve', 'sleeve')}.`,
+    `Waistline: ${resolve('waist', 'waist')}.`,
+    `Back: ${resolve('back', 'back')}.`,
+    `Train: ${resolve('train', 'train')}.`,
+    `Fabric: ${fabricLine}.`,
+    'Soft studio lighting, ivory and white tones, realistic fabric drape and texture, photorealistic, high detail.',
+  ].join(' ');
+}
+
+async function handleCopyAiPrompt(sketch, btnEl) {
+  const text = buildAiPrompt(sketch);
+  try {
+    await navigator.clipboard.writeText(text);
+    flashButtonResult(btnEl, true);
+  } catch (e) {
+    flashButtonResult(btnEl, false, '복사 실패');
+  }
 }
 
 async function handleExportCompareClick(fittings, btnEl) {
