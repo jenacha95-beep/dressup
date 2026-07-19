@@ -367,6 +367,7 @@ const LABEL = {
       sweetheart: '스위트하트', v: 'V넥', square: '스퀘어넥', halter: '홀터넥',
       offshoulder: '오프숄더', bateau: '보트넥', illusion: '일루전', straight: '스트레이트',
       jewel: '주얼넥', scoop: '스쿱넥', twisthalter: '트위스트홀터넥', other: '기타',
+      queenanne: '퀸앤넥', keyhole: '키홀넥', highneck: '하이넥', surplice: '서플리스넥',
     },
     sleeve: {
       none: '민소매', cap: '캡소매', short: '반팔', long: '긴소매',
@@ -392,9 +393,12 @@ const LABEL = {
 
 // enum 순서는 URL 인코딩에 쓰이므로 재배열 금지 (SPEC.md §4)
 const SILHOUETTE_ORDER = ['aline', 'ballgown', 'mermaid', 'trumpet', 'sheath', 'empire', 'other'];
-// jewel/scoop는 사용자가 보내준 넥라인 레퍼런스 시트에서 기존 8종과 겹치지 않는 것만
-// 골라 배열 끝에 추가한 것 (SPEC.md §4 — 재배열 금지 규칙 때문에 끝에만 추가)
-const NECKLINE_ORDER = ['sweetheart', 'v', 'square', 'halter', 'offshoulder', 'bateau', 'illusion', 'straight', 'jewel', 'scoop', 'twisthalter', 'other'];
+// jewel/scoop/queenanne/keyhole/highneck/surplice는 사용자가 보내준 넥라인 레퍼런스
+// 시트에서 기존 종류와 겹치지 않는 것만 골라 배열 끝에 추가한 것 — 재배열 금지 규칙 때문에
+// other 뒤에도 새 항목을 이어 붙인다. 칩 표시 순서는 NECKLINE_CHIP_ORDER가 따로 담당한다
+const NECKLINE_ORDER = ['sweetheart', 'v', 'square', 'halter', 'offshoulder', 'bateau', 'illusion', 'straight', 'jewel', 'scoop', 'twisthalter', 'other', 'queenanne', 'keyhole', 'highneck', 'surplice'];
+// 칩 목록에서는 "기타" 커스텀 입력을 맨 끝에 두기 위한 표시 전용 순서 (인코딩에는 NECKLINE_ORDER를 그대로 쓴다)
+const NECKLINE_CHIP_ORDER = [...NECKLINE_ORDER.filter((id) => id !== 'other'), 'other'];
 const SLEEVE_ORDER = ['none', 'cap', 'short', 'long', 'puff', 'detachable', 'other'];
 const TEXTURE_ORDER = ['satin', 'mikado', 'tulle', 'lace', 'organza', 'beaded', 'other'];
 const WAIST_ORDER = ['natural', 'drop', 'empire', 'basque', 'other'];
@@ -725,6 +729,83 @@ neckline.twisthalter = (A) => {
 
 // 새 도형을 그리지 않고 기본값(sweetheart)을 재사용한다 (SPEC.md §3.4, §4 기본값)
 neckline.other = neckline.sweetheart;
+
+// 어깨점에서 목 가까이까지 높게 올라간 뒤(하이넥에 가까운 컬러 라인), 다시 정중앙에서
+// 완만하게 파여 내려오는 넥라인 (퀸앤). 옆쪽은 비침 소재를 암시하는 높은 라인, 중앙은
+// 얕은 하트형 다이로 표현한다
+neckline.queenanne = (A) => {
+  const wingHalf = 27;
+  const wingY = A.shoulderY - 45;
+  const peakY = A.bustY - 30;
+  const dipY = A.bustY + 12;
+  return {
+    strapless: false,
+    d: `M ${A.shoulderL} ${A.shoulderY}
+        Q ${A.shoulderL - 6} ${A.shoulderY - 20} ${A.centerX - wingHalf} ${wingY}
+        C ${A.centerX - wingHalf} ${peakY} ${A.centerX - 30} ${peakY} ${A.centerX} ${dipY}
+        C ${A.centerX + 30} ${peakY} ${A.centerX + wingHalf} ${peakY} ${A.centerX + wingHalf} ${wingY}
+        Q ${A.shoulderR + 6} ${A.shoulderY - 20} ${A.shoulderR} ${A.shoulderY}`,
+  };
+};
+
+// 어깨점에서 시작해 목선을 따라 둥글게 파이는 라운드 넥라인 위에, 앞가슴 중앙에 작은
+// 물방울형 컷아웃(키홀)을 별도 강조선으로 얹는다 — 실제로 뚫린 구멍이 아니라 채워진
+// 도형 위에 겹치는 윤곽선으로만 표현한다 (트위스트홀터의 교차선과 같은 개념)
+neckline.keyhole = (A) => {
+  const dipY = A.shoulderY + 55;
+  const holeTopY = dipY + 10;
+  return {
+    strapless: false,
+    d: `M ${A.shoulderL} ${A.shoulderY}
+        Q ${A.centerX} ${dipY} ${A.shoulderR} ${A.shoulderY}`,
+    detailLines: [
+      `M ${A.centerX} ${holeTopY}
+       Q ${A.centerX - 8} ${holeTopY + 8} ${A.centerX - 6} ${holeTopY + 16}
+       Q ${A.centerX - 4} ${holeTopY + 24} ${A.centerX} ${holeTopY + 24}
+       Q ${A.centerX + 4} ${holeTopY + 24} ${A.centerX + 6} ${holeTopY + 16}
+       Q ${A.centerX + 8} ${holeTopY + 8} ${A.centerX} ${holeTopY} Z`,
+    ],
+  };
+};
+
+// 목을 감싸듯 목선 가까이까지 높이 올라오는 스탠드칼라형 넥라인. 목 앞쪽에 작은
+// 물방울형 컷아웃을 강조선으로 얹어 참고 이미지의 하이넥 슬릿을 표현한다
+neckline.highneck = (A) => {
+  const collarTopY = A.neckY - 25;
+  const neckHalf = 20;
+  const holeTopY = collarTopY + 18;
+  return {
+    strapless: false,
+    d: `M ${A.shoulderL} ${A.shoulderY}
+        Q ${A.shoulderL + 5} ${A.neckY + 5} ${A.centerX - neckHalf} ${collarTopY + 15}
+        Q ${A.centerX - neckHalf + 3} ${collarTopY} ${A.centerX} ${collarTopY - 4}
+        Q ${A.centerX + neckHalf - 3} ${collarTopY} ${A.centerX + neckHalf} ${collarTopY + 15}
+        Q ${A.shoulderR - 5} ${A.neckY + 5} ${A.shoulderR} ${A.shoulderY}`,
+    detailLines: [
+      `M ${A.centerX} ${holeTopY}
+       Q ${A.centerX - 6} ${holeTopY + 6} ${A.centerX - 4} ${holeTopY + 12}
+       Q ${A.centerX - 3} ${holeTopY + 18} ${A.centerX} ${holeTopY + 18}
+       Q ${A.centerX + 3} ${holeTopY + 18} ${A.centerX + 4} ${holeTopY + 12}
+       Q ${A.centerX + 6} ${holeTopY + 6} ${A.centerX} ${holeTopY} Z`,
+    ],
+  };
+};
+
+// 어깨점에서 정중앙으로 깊게 파이는 V 위에, 양쪽 어깨에서 반대쪽 가슴으로 교차해
+// 내려가는 랩(wrap) 자락 선을 강조선으로 얹어 서플리스 특유의 겹침을 표현한다
+neckline.surplice = (A) => {
+  const vDepth = A.bustY + 35;
+  return {
+    strapless: false,
+    d: `M ${A.shoulderL} ${A.shoulderY}
+        L ${A.centerX} ${vDepth}
+        L ${A.shoulderR} ${A.shoulderY}`,
+    detailLines: [
+      `M ${A.shoulderL} ${A.shoulderY} L ${A.waistR - 15} ${A.waistY - 10}`,
+      `M ${A.shoulderR} ${A.shoulderY} L ${A.waistL + 15} ${A.waistY - 10}`,
+    ],
+  };
+};
 
 // 실루엣이 쓰는 waistY가 기본 허리선(A.waistY)이 아닐 때(엠파이어처럼 가슴 아래로 올라간 경우)
 // 가슴선~기본 허리선 사이를 보간해 그 높이에서의 좌우 폭을 구한다. waistY가 A.waistY면 그대로 A.waistL/R
@@ -1354,7 +1435,7 @@ const VISUAL_CATEGORIES = [
     thumb: (id) => buildFullDressSvg(id, 'sweetheart', 'none', 'satin', 'satin', 'satin'),
   },
   {
-    key: 'neckline', order: NECKLINE_ORDER, title: '넥라인',
+    key: 'neckline', order: NECKLINE_CHIP_ORDER, title: '넥라인',
     thumb: (id) => {
       const svg = buildFullDressSvg('aline', id, 'none', 'satin', 'satin', 'satin');
       svg.setAttribute('viewBox', '120 80 160 130');
