@@ -939,8 +939,8 @@ function buildRecordScreen() {
   const exportBtn = document.createElement('button');
   exportBtn.type = 'button';
   exportBtn.className = 'btn';
-  exportBtn.textContent = '이미지 저장';
-  exportBtn.addEventListener('click', () => handleExportSingle(state.current));
+  exportBtn.textContent = '이미지 복사';
+  exportBtn.addEventListener('click', () => handleExportSingle(state.current, exportBtn));
   actions.appendChild(exportBtn);
   topBar.appendChild(actions);
   wrap.appendChild(topBar);
@@ -1543,8 +1543,8 @@ function buildCompareScreen() {
   const exportBtn = document.createElement('button');
   exportBtn.type = 'button';
   exportBtn.className = 'btn';
-  exportBtn.textContent = '이미지 저장';
-  exportBtn.addEventListener('click', () => handleExportCompareClick(fittings));
+  exportBtn.textContent = '이미지 복사';
+  exportBtn.addEventListener('click', () => handleExportCompareClick(fittings, exportBtn));
   actions.appendChild(exportBtn);
   topBar.appendChild(actions);
   wrap.appendChild(topBar);
@@ -1818,18 +1818,17 @@ function canvasToBlobPromise(canvas) {
   return new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
 }
 
-// 저장 후 navigator.share가 되면 공유 시트, 아니면 다운로드로 폴백 (SPEC.md §5.1).
-// 인앱 갤러리는 만들지 않는다 — 결과물은 기기 사진첩에 쌓인다
-async function shareOrDownloadCanvas(canvas, filename) {
+// 캡처 도구처럼 버튼 한 번으로 클립보드에 바로 복사한다 (SPEC.md §5.1).
+// 공유 시트/다운로드 대화상자를 거치지 않는다 — 클립보드 API를 못 쓰는 환경에서만 다운로드 폴백
+async function copyCanvasToClipboard(canvas, filename) {
   const blob = await canvasToBlobPromise(canvas);
-  const file = new File([blob], filename, { type: 'image/png' });
 
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+  if (navigator.clipboard && window.ClipboardItem) {
     try {
-      await navigator.share({ files: [file] });
-      return;
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+      return true;
     } catch (e) {
-      // 사용자가 공유 시트를 취소한 경우 등 — 다운로드로 폴백
+      // 클립보드 쓰기 권한 거부 등 — 다운로드로 폴백
     }
   }
 
@@ -1839,16 +1838,27 @@ async function shareOrDownloadCanvas(canvas, filename) {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+  return false;
 }
 
-async function handleExportSingle(fitting) {
+// 클릭한 버튼 자신에 결과를 잠깐 표시해 복사됐는지 바로 알 수 있게 한다
+function flashButtonResult(btnEl, copied) {
+  if (!btnEl) return;
+  const original = btnEl.textContent;
+  btnEl.textContent = copied ? '복사됨 ✓' : '다운로드됨';
+  setTimeout(() => { btnEl.textContent = original; }, 1500);
+}
+
+async function handleExportSingle(fitting, btnEl) {
   const canvas = await exportFittingImage(fitting);
-  await shareOrDownloadCanvas(canvas, `dress-${todayStr()}.png`);
+  const copied = await copyCanvasToClipboard(canvas, `dress-${todayStr()}.png`);
+  flashButtonResult(btnEl, copied);
 }
 
-async function handleExportCompareClick(fittings) {
+async function handleExportCompareClick(fittings, btnEl) {
   const canvas = await exportCompareImage(fittings);
-  await shareOrDownloadCanvas(canvas, `dress-compare-${todayStr()}.png`);
+  const copied = await copyCanvasToClipboard(canvas, `dress-compare-${todayStr()}.png`);
+  flashButtonResult(btnEl, copied);
 }
 
 // ── 스케치 코드 인코딩 (SPEC.md §5.2) ──────────────────────────────────────
