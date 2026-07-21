@@ -2448,7 +2448,8 @@ function buildAiPrompt(sketch) {
   }).join('; ');
 
   return [
-    'A professional studio photograph of a couture wedding dress on a headless dress form mannequin, front view, elegant bridal editorial style.',
+    'A professional studio photograph of a couture wedding dress on a headless dress form mannequin, elegant bridal editorial style.',
+    'Show exactly two full-body views side by side in one image: front view on the left, back view on the right. Each view must be a complete, uncropped shot showing the entire dress from shoulder to hem. Do not add any extra close-up, zoomed-in, or cropped detail insets of fabric/texture — only the two full views.',
     `Silhouette: ${resolve('silhouette', 'silhouette')}.`,
     `Neckline: ${resolve('neckline', 'neckline')}.`,
     `Sleeves: ${resolve('sleeve', 'sleeve')}.`,
