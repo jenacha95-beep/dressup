@@ -503,7 +503,7 @@ silhouette.aline = (A) => {
 silhouette.ballgown = (A) => {
   const hemHalf = (A.hipR - A.centerX) + 140;
   const hemL = A.centerX - hemHalf, hemR = A.centerX + hemHalf;
-  const archY = A.waistY + (A.hemY - A.waistY) * 0.22;
+  const archY = A.waistY + (A.hemY - A.waistY) * 0.38;
   const foldLines = buildFoldLines([
     { y: A.waistY + 6, leftX: A.waistL, rightX: A.waistR },
     { y: archY, leftX: hemL, rightX: hemR },
