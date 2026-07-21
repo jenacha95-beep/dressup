@@ -134,7 +134,7 @@ Fitting = {
   sketch: Sketch
 }
 Sketch = {
-  silhouette:     'aline'|'ballgown'|'mermaid'|'trumpet'|'sheath'|'empire'|'other',
+  silhouette:     'aline'|'ballgown'|'mermaid'|'trumpet'|'sheath'|'empire'|'other'|'princess',
   neckline:       'sweetheart'|'v'|'square'|'halter'|'offshoulder'|'bateau'|'illusion'|'straight'|'jewel'|'scoop'|'twisthalter'|'other'|'queenanne'|'keyhole'|'highneck'|'surplice',
   sleeve:         'none'|'cap'|'short'|'long'|'puff'|'other'|'offshoulder',
   waist:          'natural'|'drop'|'empire'|'basque'|'other',
@@ -169,8 +169,9 @@ JSON 백업(§5.3)에는 그대로 포함된다.
 ```js
 const LABEL = {
   ko: {
-    silhouette: { aline: 'A라인', ballgown: '볼가운', mermaid: '머메이드',
-                  trumpet: '트럼펫', sheath: '시스', empire: '엠파이어', other: '기타' },
+    silhouette: { aline: 'A라인', ballgown: '벨라인', mermaid: '머메이드',
+                  trumpet: '트럼펫', sheath: '시스', empire: '엠파이어', other: '기타',
+                  princess: '프린세스' },  // id는 ballgown 그대로 두고 라벨만 벨라인으로 변경
     neckline:   { sweetheart: '스위트하트', v: 'V넥', square: '스퀘어넥', jewel: '주얼넥', scoop: '스쿱넥', twisthalter: '트위스트홀터넥', ... },
     texture:    { satin: '새틴', mikado: '미카도', tulle: '튤', lace: '레이스',
                   organza: '오간자', beaded: '비즈', other: '기타' },  // skirtTexture/bodiceTexture/sleeveTexture가 공유

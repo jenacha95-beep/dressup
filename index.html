@@ -362,8 +362,9 @@ const A = {
 const LABEL = {
   ko: {
     silhouette: {
-      aline: 'A라인', ballgown: '볼가운', mermaid: '머메이드',
+      aline: 'A라인', ballgown: '벨라인', mermaid: '머메이드',
       trumpet: '트럼펫', sheath: '시스', empire: '엠파이어', other: '기타',
+      princess: '프린세스',
     },
     neckline: {
       sweetheart: '스위트하트', v: 'V넥', square: '스퀘어넥', halter: '홀터넥',
@@ -394,8 +395,9 @@ const LABEL = {
   // AI 이미지 생성 프롬프트 조립 전용 영문 라벨 (SPEC.md §5.3) — 화면에는 노출되지 않는다
   en: {
     silhouette: {
-      aline: 'A-line', ballgown: 'ball gown', mermaid: 'mermaid', trumpet: 'trumpet',
+      aline: 'A-line', ballgown: 'bell-line ball gown', mermaid: 'mermaid', trumpet: 'trumpet',
       sheath: 'sheath', empire: 'empire', other: 'custom silhouette',
+      princess: 'princess line (long vertical seams, flares from the hip)',
     },
     neckline: {
       sweetheart: 'sweetheart neckline', v: 'V-neck', square: 'square neckline',
@@ -432,7 +434,9 @@ const LABEL = {
 
 // enum 순서는 URL 인코딩에 쓰이므로 재배열 금지 (SPEC.md §4). "기타" 칩은 목록에서
 // 뺐지만(아래 *_CHIP_ORDER), 과거에 저장된 기록과의 인코딩 호환을 위해 값 자체는 남겨둔다
-const SILHOUETTE_ORDER = ['aline', 'ballgown', 'mermaid', 'trumpet', 'sheath', 'empire', 'other'];
+// princess(프린세스)는 새로 추가한 것 — other 뒤에 이어 붙인다. ballgown은 id는 그대로
+// 두고 라벨만 "벨라인"으로 바꿨다(허리부터 퍼지는 벨라인 vs 골반부터 퍼지는 프린세스)
+const SILHOUETTE_ORDER = ['aline', 'ballgown', 'mermaid', 'trumpet', 'sheath', 'empire', 'other', 'princess'];
 const SILHOUETTE_CHIP_ORDER = SILHOUETTE_ORDER.filter((id) => id !== 'other');
 // jewel/scoop/queenanne/keyhole/highneck/surplice는 사용자가 보내준 넥라인 레퍼런스
 // 시트에서 기존 종류와 겹치지 않는 것만 골라 배열 끝에 추가한 것 — 재배열 금지 규칙 때문에
@@ -531,11 +535,11 @@ silhouette.mermaid = (A) => {
     foldLines,
     d: `M ${A.waistL} ${A.waistY}
         C ${A.waistL - 8} ${A.waistY + (A.hipY - A.waistY) * 0.5} ${A.hipL} ${A.hipY - (A.hipY - A.waistY) * 0.1} ${A.hipL} ${A.hipY}
-        L ${kneeL} ${A.kneeY}
+        C ${A.hipL - 2} ${A.hipY + (A.kneeY - A.hipY) * 0.55} ${kneeL + 3} ${A.kneeY - (A.kneeY - A.hipY) * 0.3} ${kneeL} ${A.kneeY}
         C ${kneeL - 10} ${A.kneeY + (A.hemY - A.kneeY) * 0.3} ${hemL - 40} ${A.hemY - (A.hemY - A.kneeY) * 0.4} ${hemL} ${A.hemY}
         L ${hemR} ${A.hemY}
         C ${hemR + 40} ${A.hemY - (A.hemY - A.kneeY) * 0.4} ${kneeR + 10} ${A.kneeY + (A.hemY - A.kneeY) * 0.3} ${kneeR} ${A.kneeY}
-        L ${A.hipR} ${A.hipY}
+        C ${kneeR - 3} ${A.kneeY - (A.kneeY - A.hipY) * 0.3} ${A.hipR} ${A.hipY + (A.kneeY - A.hipY) * 0.55} ${A.hipR} ${A.hipY}
         C ${A.hipR} ${A.hipY - (A.hipY - A.waistY) * 0.1} ${A.waistR + 8} ${A.waistY + (A.hipY - A.waistY) * 0.5} ${A.waistR} ${A.waistY} Z`,
   };
 };
@@ -560,11 +564,11 @@ silhouette.trumpet = (A) => {
     foldLines,
     d: `M ${A.waistL} ${A.waistY}
         C ${A.waistL - 8} ${A.waistY + (A.hipY - A.waistY) * 0.5} ${A.hipL} ${A.hipY - (A.hipY - A.waistY) * 0.1} ${A.hipL} ${A.hipY}
-        L ${flareStartL} ${flareStartY}
+        C ${A.hipL} ${A.hipY + (flareStartY - A.hipY) * 0.6} ${flareStartL + 2} ${flareStartY - (flareStartY - A.hipY) * 0.25} ${flareStartL} ${flareStartY}
         L ${hemL} ${A.hemY}
         L ${hemR} ${A.hemY}
         L ${flareStartR} ${flareStartY}
-        L ${A.hipR} ${A.hipY}
+        C ${flareStartR - 2} ${flareStartY - (flareStartY - A.hipY) * 0.25} ${A.hipR} ${A.hipY + (flareStartY - A.hipY) * 0.6} ${A.hipR} ${A.hipY}
         C ${A.hipR} ${A.hipY - (A.hipY - A.waistY) * 0.1} ${A.waistR + 8} ${A.waistY + (A.hipY - A.waistY) * 0.5} ${A.waistR} ${A.waistY} Z`,
   };
 };
@@ -610,6 +614,34 @@ silhouette.empire = (A) => {
         C ${waistL - 5} ${waistY + (A.hemY - waistY) * 0.3} ${hemL - 20} ${A.hemY - (A.hemY - waistY) * 0.3} ${hemL} ${A.hemY}
         L ${hemR} ${A.hemY}
         C ${hemR + 20} ${A.hemY - (A.hemY - waistY) * 0.3} ${waistR + 5} ${waistY + (A.hemY - waistY) * 0.3} ${waistR} ${waistY} Z`,
+  };
+};
+
+// 벨라인(ballgown)과 짝을 이루는 실루엣 — 벨라인은 허리(waistY)에서 바로 풍성하게
+// 퍼지지만, 프린세스는 골반(hipY)까지는 시스처럼 몸에 붙어 내려가다가 골반부터 한 번의
+// 긴 곡선으로 풍성하게 퍼진다(가슴~헴까지 이어지는 프린세스 심 절개 특유의 라인).
+// 벨라인보다 플레어 구간이 짧아(hip~hem) 같은 헴 폭이어도 더 급격하고 드라마틱하게 보인다
+silhouette.princess = (A) => {
+  const hemHalf = (A.hipR - A.centerX) + 130;
+  const hemL = A.centerX - hemHalf, hemR = A.centerX + hemHalf;
+  const midY = A.hipY + (A.hemY - A.hipY) * 0.55;
+  const hipHalf = A.hipR - A.centerX;
+  const midHalf = hipHalf + (hemHalf - hipHalf) * 0.65;
+  const foldLines = buildFoldLines([
+    { y: A.waistY + 6, leftX: A.waistL, rightX: A.waistR },
+    { y: A.hipY, leftX: A.hipL, rightX: A.hipR },
+    { y: midY, leftX: A.centerX - midHalf, rightX: A.centerX + midHalf },
+    { y: A.hemY - 6, leftX: hemL, rightX: hemR },
+  ]);
+  return {
+    waistY: A.waistY,
+    foldLines,
+    d: `M ${A.waistL} ${A.waistY}
+        L ${A.hipL} ${A.hipY}
+        C ${A.hipL - 5} ${A.hipY + (A.hemY - A.hipY) * 0.25} ${hemL - 50} ${A.hemY - (A.hemY - A.hipY) * 0.15} ${hemL} ${A.hemY}
+        L ${hemR} ${A.hemY}
+        C ${hemR + 50} ${A.hemY - (A.hemY - A.hipY) * 0.15} ${A.hipR + 5} ${A.hipY + (A.hemY - A.hipY) * 0.25} ${A.hipR} ${A.hipY}
+        L ${A.waistR} ${A.waistY} Z`,
   };
 };
 
