@@ -513,11 +513,11 @@ silhouette.ballgown = (A) => {
     waistY: A.waistY,
     foldLines,
     d: `M ${A.waistL} ${A.waistY}
-        C ${A.waistL - 10} ${A.waistY + (archY - A.waistY) * 0.3} ${hemL - 25} ${archY - 45} ${hemL} ${archY}
+        C ${A.waistL - 15} ${A.waistY + (archY - A.waistY) * 0.35} ${hemL} ${archY - 60} ${hemL} ${archY}
         L ${hemL} ${A.hemY}
         L ${hemR} ${A.hemY}
         L ${hemR} ${archY}
-        C ${hemR + 25} ${archY - 45} ${A.waistR + 10} ${A.waistY + (archY - A.waistY) * 0.3} ${A.waistR} ${A.waistY} Z`,
+        C ${hemR} ${archY - 60} ${A.waistR + 15} ${A.waistY + (archY - A.waistY) * 0.35} ${A.waistR} ${A.waistY} Z`,
   };
 };
 
