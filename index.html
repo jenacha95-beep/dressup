@@ -880,11 +880,14 @@ function buildBodice(A, necklineId, waistY) {
   const necklineRest = stripMove(necklineD);
 
   // 스트랩리스는 옆선이 가슴선(bustY)에서 뚝 끊겨서, 어깨점에 붙는 소매와 사이에
-  // 빈 틈이 크게 보이는 문제가 있었다. 앞쪽 네크라인 모양은 그대로 두고 옆선만 겨드랑이
-  // 높이(sideTopY)까지 살짝 더 올려, 소매가 있을 때 몸판과 이어지는 느낌이 나게 한다
-  const sideTopY = A.shoulderY;
-  const sideTopL = A.shoulderL;
-  const sideTopR = A.shoulderR;
+  // 빈 틈이 크게 보이는 문제가 있었다. 앞쪽 네크라인 모양은 그대로 두고 옆선만 어깨점까지
+  // 살짝 더 올려, 소매가 있을 때 몸판과 이어지는 느낌이 나게 한다 — 다만 홀터 계열(홀터/
+  // 트위스트홀터)은 목으로 올라가는 자기 스트랩이 이미 있어서, 옆선까지 어깨로 올리면
+  // "옆에서도 감싸 올라가는" 이중 스트랩처럼 보여 어색하다. 이 둘은 원래대로 가슴선에서 끊는다
+  const useWing = strapless && necklineId !== 'halter' && necklineId !== 'twisthalter';
+  const sideTopY = useWing ? A.shoulderY : A.bustY;
+  const sideTopL = useWing ? A.shoulderL : A.bustL;
+  const sideTopR = useWing ? A.shoulderR : A.bustR;
   const d = strapless
     ? `M ${waistL} ${waistY}
         Q ${A.bustL - 4} ${A.bustY + (waistY - A.bustY) * 0.5} ${sideTopL} ${sideTopY}
@@ -968,7 +971,7 @@ function registerTexturePattern(svgNS, defs, textureId) {
 // 해결한다 — 보디스가 그 위를 덮으므로 네크라인이 파인 부분에서만 드러난다
 function torsoBase(A) {
   const neckHalf = 12;
-  const neckTopY = A.neckY - 43;
+  const neckTopY = A.neckY - 25;
   const tuckY = A.shoulderY - 12;
   const bustBottomY = A.bustY + 18;
   return `M ${A.centerX - neckHalf} ${neckTopY}
