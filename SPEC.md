@@ -135,8 +135,8 @@ Fitting = {
 }
 Sketch = {
   silhouette:     'aline'|'ballgown'|'mermaid'|'trumpet'|'sheath'|'empire'|'other',
-  neckline:       'sweetheart'|'v'|'square'|'halter'|'offshoulder'|'bateau'|'illusion'|'straight'|'jewel'|'scoop'|'twisthalter'|'other',
-  sleeve:         'none'|'cap'|'short'|'long'|'puff'|'detachable'|'other',
+  neckline:       'sweetheart'|'v'|'square'|'halter'|'offshoulder'|'bateau'|'illusion'|'straight'|'jewel'|'scoop'|'twisthalter'|'other'|'queenanne'|'keyhole'|'highneck'|'surplice',
+  sleeve:         'none'|'cap'|'short'|'long'|'puff'|'other'|'offshoulder',
   waist:          'natural'|'drop'|'empire'|'basque'|'other',
   back:           'vback'|'lowback'|'keyhole'|'buttons'|'illusion'|'other',
   train:          'none'|'sweep'|'chapel'|'cathedral'|'other',

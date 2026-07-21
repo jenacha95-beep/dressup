@@ -26,11 +26,6 @@
   .dress-outline.other {
     stroke-dasharray: 4 3;
   }
-  .detach-mark {
-    stroke: var(--outline);
-    stroke-width: 1;
-    stroke-dasharray: 3 2;
-  }
   .fold-line {
     fill: none;
     stroke: var(--outline);
@@ -378,7 +373,7 @@ const LABEL = {
     },
     sleeve: {
       none: '민소매', cap: '캡소매', short: '반팔', long: '긴소매',
-      puff: '퍼프소매', detachable: '탈부착소매', other: '기타',
+      puff: '퍼프소매', other: '기타', offshoulder: '오프숄더 밴드',
     },
     texture: {
       satin: '새틴', mikado: '미카도', tulle: '튤', lace: '레이스',
@@ -413,7 +408,8 @@ const LABEL = {
     },
     sleeve: {
       none: 'sleeveless', cap: 'cap sleeves', short: 'short sleeves', long: 'long sleeves',
-      puff: 'puff sleeves', detachable: 'detachable sleeves', other: 'custom sleeves',
+      puff: 'puff sleeves', other: 'custom sleeves',
+      offshoulder: 'off-the-shoulder draped sleeve band with a gathered knot at center front',
     },
     texture: {
       satin: 'satin', mikado: 'mikado silk', tulle: 'tulle', lace: 'lace',
@@ -443,7 +439,9 @@ const SILHOUETTE_CHIP_ORDER = SILHOUETTE_ORDER.filter((id) => id !== 'other');
 // other 뒤에도 새 항목을 이어 붙인다. 칩 표시 순서는 NECKLINE_CHIP_ORDER가 따로 담당한다
 const NECKLINE_ORDER = ['sweetheart', 'v', 'square', 'halter', 'offshoulder', 'bateau', 'illusion', 'straight', 'jewel', 'scoop', 'twisthalter', 'other', 'queenanne', 'keyhole', 'highneck', 'surplice'];
 const NECKLINE_CHIP_ORDER = NECKLINE_ORDER.filter((id) => id !== 'other');
-const SLEEVE_ORDER = ['none', 'cap', 'short', 'long', 'puff', 'detachable', 'other'];
+// detachable(탈부착소매)은 기능 자체를 제거했다 (사용자 요청). offshoulder(오프숄더 밴드)는
+// 참고 이미지 기반으로 새로 추가한 것 — 재배열 금지 규칙 때문에 other 뒤에 이어 붙인다
+const SLEEVE_ORDER = ['none', 'cap', 'short', 'long', 'puff', 'other', 'offshoulder'];
 const SLEEVE_CHIP_ORDER = SLEEVE_ORDER.filter((id) => id !== 'other');
 const TEXTURE_ORDER = ['satin', 'mikado', 'tulle', 'lace', 'organza', 'beaded', 'other'];
 const WAIST_ORDER = ['natural', 'drop', 'empire', 'basque', 'other'];
@@ -930,10 +928,39 @@ sleeve.cap = (A) => ({ d: `${sleevePetal(A, -1, 15, 30, 18, 15)} ${sleevePetal(A
 sleeve.short = (A) => ({ d: `${sleevePetal(A, -1, 8, 75, 20, 11)} ${sleevePetal(A, 1, 8, 75, 20, 11)}` });
 sleeve.long = (A) => ({ d: `${sleevePetal(A, -1, 4, 180, 13, 7)} ${sleevePetal(A, 1, 4, 180, 13, 7)}` });
 sleeve.puff = (A) => ({ d: `${sleevePetal(A, -1, 24, 42, 36, 10)} ${sleevePetal(A, 1, 24, 42, 36, 10)}` });
-// 긴소매와 같은 모양이되, 렌더러가 팔뚝 중간에 점선 탈부착 표시선을 추가로 그린다
-sleeve.detachable = (A) => ({ d: sleeve.long(A).d, detachMarkY: A.shoulderY + 180 * 0.5 });
 // 새 도형을 그리지 않고 기본값(none, 즉 민소매)을 재사용한다 (SPEC.md §3.4, §4 기본값)
 sleeve.other = sleeve.none;
+
+// 오프숄더 밴드 소매 — 팔 위를 가로지르는 넓은 밴드가 어깨 바깥까지 뻗고, 중앙 앞에서
+// 천이 모여 매듭지는 모양(참고 이미지 기준). 다른 소매처럼 어깨점에서 아래로 늘어지는
+// 게 아니라, 어깨점을 가로질러 좌우로 뻗는 구조라 별도로 만든다
+sleeve.offshoulder = (A) => {
+  const topY = A.bustY - 28;
+  const dipTopY = A.bustY - 8;
+  const bandBottomY = A.bustY + 8;
+  const dipBottomY = A.bustY + 20;
+  const outReach = 26;
+  const outL = A.shoulderL - outReach;
+  const outR = A.shoulderR + outReach;
+  const knotHalf = 10;
+
+  const band = `M ${outL} ${topY + 10}
+      Q ${A.shoulderL - 6} ${topY} ${A.centerX - 14} ${dipTopY}
+      Q ${A.centerX} ${dipTopY + 10} ${A.centerX + 14} ${dipTopY}
+      Q ${A.shoulderR + 6} ${topY} ${outR} ${topY + 10}
+      L ${outR - 6} ${bandBottomY + 6}
+      Q ${A.shoulderR} ${bandBottomY + 10} ${A.centerX + 12} ${dipBottomY}
+      Q ${A.centerX} ${dipBottomY + 12} ${A.centerX - 12} ${dipBottomY}
+      Q ${A.shoulderL} ${bandBottomY + 10} ${outL - 6} ${bandBottomY + 6} Z`;
+
+  const knotCy = (dipTopY + dipBottomY) / 2 + 5;
+  const knotRy = 9;
+  const knot = `M ${A.centerX - knotHalf} ${knotCy}
+      C ${A.centerX - knotHalf} ${knotCy - knotRy} ${A.centerX + knotHalf} ${knotCy - knotRy} ${A.centerX + knotHalf} ${knotCy}
+      C ${A.centerX + knotHalf} ${knotCy + knotRy} ${A.centerX - knotHalf} ${knotCy + knotRy} ${A.centerX - knotHalf} ${knotCy} Z`;
+
+  return { d: `${band} ${knot}` };
+};
 
 // 텍스처: <pattern> 타일로 정의해 fill="url(#...)"로 참조한다 (SPEC.md §3.3). 미묘하게 —
 // 특히 레이스는 튤(균일한 그물망)과 달리 불규칙하게 흩뿌린 작은 점으로 그려 net 무늬로 안 보이게 한다
@@ -1221,19 +1248,6 @@ function buildFullDressSvg(silhouetteId, necklineId, sleeveId, skirtTextureId, b
     p.setAttribute('fill', registerTexturePattern(svgNS, defs, sleeveTextureId));
     p.setAttribute('class', 'dress-outline' + (sleeveId === 'other' ? ' other' : ''));
     svg.appendChild(p);
-
-    if (sleeveId === 'detachable') {
-      [A.shoulderL, A.shoulderR].forEach((shoulderX) => {
-        const mark = document.createElementNS(svgNS, 'line');
-        const markY = A.shoulderY + 90;
-        mark.setAttribute('x1', shoulderX - 10);
-        mark.setAttribute('x2', shoulderX + 10);
-        mark.setAttribute('y1', markY);
-        mark.setAttribute('y2', markY);
-        mark.setAttribute('class', 'detach-mark');
-        svg.appendChild(mark);
-      });
-    }
   }
 
   return svg;
@@ -2181,11 +2195,10 @@ function loadImage(src) {
 }
 
 // 내보낼 SVG는 원본 문서와 분리된 독립 리소스로 래스터화되므로, 바깥 <style>의
-// .dress-outline/.detach-mark/.fold-line 클래스 규칙을 못 읽는다 — 값을 그대로 박아 자체완결시킨다
+// .dress-outline/.fold-line 클래스 규칙을 못 읽는다 — 값을 그대로 박아 자체완결시킨다
 const EXPORT_SVG_STYLE = `
   .dress-outline { stroke: #8A7A6D; stroke-width: 1; }
   .dress-outline.other { stroke-dasharray: 4 3; }
-  .detach-mark { stroke: #8A7A6D; stroke-width: 1; stroke-dasharray: 3 2; }
   .fold-line { fill: none; stroke: #8A7A6D; stroke-width: 0.6; opacity: 0.45; }
   .torso-outline { fill: none; stroke: #8A7A6D; stroke-width: 0.8; opacity: 0.35; }
   .waist-seam { fill: none; stroke: #8A7A6D; stroke-width: 1.3; }
