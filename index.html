@@ -371,10 +371,9 @@ const LABEL = {
     },
     neckline: {
       sweetheart: '스위트하트', v: 'V넥', square: '스퀘어넥', halter: '홀터넥',
-      offshoulder: '오프숄더', bateau: '보트넥', illusion: '일자 일루전넥', straight: '스트레이트',
+      bateau: '보트넥', illusion: '일자 일루전넥', straight: '스트레이트',
       jewel: '주얼넥', scoop: '스쿱넥', twisthalter: '트위스트홀터넥', other: '기타',
-      queenanne: '퀸앤넥', keyhole: '키홀넥', highneck: '하이넥', surplice: '서플리스넥',
-      illusionheart: '하트 일루전넥',
+      queenanne: '퀸앤넥', surplice: '서플리스넥', illusionheart: '하트 일루전넥',
     },
     sleeve: {
       none: '민소매', cap: '캡소매', short: '반팔', long: '긴소매',
@@ -405,12 +404,12 @@ const LABEL = {
     },
     neckline: {
       sweetheart: 'sweetheart neckline', v: 'V-neck', square: 'square neckline',
-      halter: 'halter neckline', offshoulder: 'off-the-shoulder neckline',
+      halter: 'halter neckline',
       bateau: 'bateau (boat) neckline',
       illusion: 'illusion neckline with a sheer mesh yoke over a straight-across lining',
       straight: 'straight-across neckline', jewel: 'jewel neckline', scoop: 'scoop neckline',
       twisthalter: 'twist halter neckline', queenanne: 'Queen Anne neckline',
-      keyhole: 'keyhole neckline', highneck: 'high neckline', surplice: 'surplice (wrap) neckline',
+      surplice: 'surplice (wrap) neckline',
       illusionheart: 'illusion neckline with a sheer mesh yoke over a sweetheart lining',
       other: 'custom neckline',
     },
@@ -445,11 +444,12 @@ const LABEL = {
 const SILHOUETTE_ORDER = ['aline', 'ballgown', 'mermaid', 'trumpet', 'sheath', 'empire', 'other', 'princess'];
 // 칩 표시 순서는 인코딩 순서와 무관하게 사용자가 원하는 순서로 직접 나열 (기타 제외)
 const SILHOUETTE_CHIP_ORDER = ['aline', 'ballgown', 'princess', 'empire', 'sheath', 'mermaid', 'trumpet'];
-// jewel/scoop/queenanne/keyhole/highneck/surplice는 사용자가 보내준 넥라인 레퍼런스
-// 시트에서 기존 종류와 겹치지 않는 것만 골라 배열 끝에 추가한 것 — 재배열 금지 규칙 때문에
-// other 뒤에도 새 항목을 이어 붙인다. 칩 표시 순서는 NECKLINE_CHIP_ORDER가 따로 담당한다
-const NECKLINE_ORDER = ['sweetheart', 'v', 'square', 'halter', 'offshoulder', 'bateau', 'illusion', 'straight', 'jewel', 'scoop', 'twisthalter', 'other', 'queenanne', 'keyhole', 'highneck', 'surplice', 'illusionheart'];
-const NECKLINE_CHIP_ORDER = NECKLINE_ORDER.filter((id) => id !== 'other');
+// offshoulder/keyhole/highneck은 사용자 요청으로 기능 자체를 제거했다(탈부착소매와 같은
+// 이유 — 실사용 데이터가 없는 개발 초기라 인코딩 배열에서도 완전히 뺐다). 칩 표시 순서는
+// NECKLINE_CHIP_ORDER가 따로 담당한다
+const NECKLINE_ORDER = ['sweetheart', 'v', 'square', 'halter', 'bateau', 'illusion', 'straight', 'jewel', 'scoop', 'twisthalter', 'other', 'queenanne', 'surplice', 'illusionheart'];
+// 사용자가 정리한 순서대로 직접 나열 (기타 제외)
+const NECKLINE_CHIP_ORDER = ['sweetheart', 'illusionheart', 'v', 'square', 'straight', 'illusion', 'bateau', 'jewel', 'scoop', 'halter', 'twisthalter', 'queenanne', 'surplice'];
 // detachable(탈부착소매)은 기능 자체를 제거했다 (사용자 요청). offshoulder(오프숄더 밴드)는
 // 참고 이미지 기반으로 새로 추가한 것 — 재배열 금지 규칙 때문에 other 뒤에 이어 붙인다
 const SLEEVE_ORDER = ['none', 'cap', 'short', 'long', 'puff', 'other', 'offshoulder'];
@@ -732,16 +732,6 @@ neckline.halter = (A) => {
   };
 };
 
-// 가슴선 위쪽에서 완만하게 휘는, 어깨가 드러나는 수평에 가까운 넥라인
-neckline.offshoulder = (A) => {
-  const offY = A.bustY - 15;
-  return {
-    strapless: true,
-    d: `M ${A.bustL} ${offY}
-        Q ${A.centerX} ${offY - 6} ${A.bustR} ${offY}`,
-  };
-};
-
 // 어깨점을 넓고 얕게 잇는, 쇄골선을 따라가는 보트넥
 neckline.bateau = (A) => {
   return {
@@ -851,49 +841,6 @@ neckline.queenanne = (A) => {
         C ${A.centerX - wingHalf} ${peakY} ${A.centerX - 26} ${peakY} ${A.centerX} ${dipY}
         C ${A.centerX + 26} ${peakY} ${A.centerX + wingHalf} ${peakY} ${A.centerX + wingHalf} ${wingY}
         Q ${A.shoulderR + 2} ${A.shoulderY - 12} ${A.shoulderR} ${A.shoulderY}`,
-  };
-};
-
-// 어깨점에서 시작해 목선을 따라 둥글게 파이는 라운드 넥라인 위에, 앞가슴 중앙에 작은
-// 물방울형 컷아웃(키홀)을 별도 강조선으로 얹는다 — 실제로 뚫린 구멍이 아니라 채워진
-// 도형 위에 겹치는 윤곽선으로만 표현한다 (트위스트홀터의 교차선과 같은 개념)
-neckline.keyhole = (A) => {
-  const dipY = A.shoulderY + 55;
-  const holeTopY = dipY + 10;
-  return {
-    strapless: false,
-    d: `M ${A.shoulderL} ${A.shoulderY}
-        Q ${A.centerX} ${dipY} ${A.shoulderR} ${A.shoulderY}`,
-    detailLines: [
-      `M ${A.centerX} ${holeTopY}
-       Q ${A.centerX - 8} ${holeTopY + 8} ${A.centerX - 6} ${holeTopY + 16}
-       Q ${A.centerX - 4} ${holeTopY + 24} ${A.centerX} ${holeTopY + 24}
-       Q ${A.centerX + 4} ${holeTopY + 24} ${A.centerX + 6} ${holeTopY + 16}
-       Q ${A.centerX + 8} ${holeTopY + 8} ${A.centerX} ${holeTopY} Z`,
-    ],
-  };
-};
-
-// 목을 감싸듯 목선 가까이까지 높이 올라오는 스탠드칼라형 넥라인. 목 앞쪽에 작은
-// 물방울형 컷아웃을 강조선으로 얹어 참고 이미지의 하이넥 슬릿을 표현한다
-neckline.highneck = (A) => {
-  const collarTopY = A.neckY - 25;
-  const neckHalf = 20;
-  const holeTopY = collarTopY + 18;
-  return {
-    strapless: false,
-    d: `M ${A.shoulderL} ${A.shoulderY}
-        Q ${A.shoulderL + 5} ${A.neckY + 5} ${A.centerX - neckHalf} ${collarTopY + 15}
-        Q ${A.centerX - neckHalf + 3} ${collarTopY} ${A.centerX} ${collarTopY - 4}
-        Q ${A.centerX + neckHalf - 3} ${collarTopY} ${A.centerX + neckHalf} ${collarTopY + 15}
-        Q ${A.shoulderR - 5} ${A.neckY + 5} ${A.shoulderR} ${A.shoulderY}`,
-    detailLines: [
-      `M ${A.centerX} ${holeTopY}
-       Q ${A.centerX - 6} ${holeTopY + 6} ${A.centerX - 4} ${holeTopY + 12}
-       Q ${A.centerX - 3} ${holeTopY + 18} ${A.centerX} ${holeTopY + 18}
-       Q ${A.centerX + 3} ${holeTopY + 18} ${A.centerX + 4} ${holeTopY + 12}
-       Q ${A.centerX + 6} ${holeTopY + 6} ${A.centerX} ${holeTopY} Z`,
-    ],
   };
 };
 
