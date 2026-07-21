@@ -437,7 +437,8 @@ const LABEL = {
 // princess(프린세스)는 새로 추가한 것 — other 뒤에 이어 붙인다. ballgown은 id는 그대로
 // 두고 라벨만 "벨라인"으로 바꿨다(허리부터 퍼지는 벨라인 vs 골반부터 퍼지는 프린세스)
 const SILHOUETTE_ORDER = ['aline', 'ballgown', 'mermaid', 'trumpet', 'sheath', 'empire', 'other', 'princess'];
-const SILHOUETTE_CHIP_ORDER = SILHOUETTE_ORDER.filter((id) => id !== 'other');
+// 칩 표시 순서는 인코딩 순서와 무관하게 사용자가 원하는 순서로 직접 나열 (기타 제외)
+const SILHOUETTE_CHIP_ORDER = ['aline', 'ballgown', 'princess', 'empire', 'sheath', 'mermaid', 'trumpet'];
 // jewel/scoop/queenanne/keyhole/highneck/surplice는 사용자가 보내준 넥라인 레퍼런스
 // 시트에서 기존 종류와 겹치지 않는 것만 골라 배열 끝에 추가한 것 — 재배열 금지 규칙 때문에
 // other 뒤에도 새 항목을 이어 붙인다. 칩 표시 순서는 NECKLINE_CHIP_ORDER가 따로 담당한다
@@ -494,26 +495,28 @@ silhouette.aline = (A) => {
   };
 };
 
-// 허리에서 밑단까지 하나의 긴 곡선으로 볼록하게 부풀리는, 6종 중 가장 넓은 실루엣
+// 허리에서 밑단까지 진짜 돔/벨 모양으로 부풀리는 실루엣 — 스커트 중간이 최종 헴 폭보다도
+// 더 볼록 튀어나왔다가 다시 살짝 좁혀져 헴으로 떨어지는 2단 곡선을 써서, 프린세스라인처럼
+// 한 방향으로만 넓어지는 플레어와 뚜렷이 구분되는 둥근 실루엣을 만든다(참고 이미지 기준)
 silhouette.ballgown = (A) => {
   const hemHalf = (A.hipR - A.centerX) + 145;
   const hemL = A.centerX - hemHalf, hemR = A.centerX + hemHalf;
-  // 볼록한 곡선을 대략 따라가도록 중간 체크포인트를 바깥으로 살짝 밀어둔다
-  const midY = A.waistY + (A.hemY - A.waistY) * 0.55;
-  const waistHalf = A.waistR - A.centerX;
-  const midHalf = waistHalf + (hemHalf - waistHalf) * 0.65;
+  const bulgeHalf = hemHalf + 25;
+  const bulgeY = A.waistY + (A.hemY - A.waistY) * 0.62;
   const foldLines = buildFoldLines([
     { y: A.waistY + 6, leftX: A.waistL, rightX: A.waistR },
-    { y: midY, leftX: A.centerX - midHalf, rightX: A.centerX + midHalf },
+    { y: bulgeY, leftX: A.centerX - bulgeHalf, rightX: A.centerX + bulgeHalf },
     { y: A.hemY - 6, leftX: hemL, rightX: hemR },
   ]);
   return {
     waistY: A.waistY,
     foldLines,
     d: `M ${A.waistL} ${A.waistY}
-        C ${A.waistL - 5} ${A.waistY + (A.hemY - A.waistY) * 0.25} ${hemL - 60} ${A.hemY - (A.hemY - A.waistY) * 0.15} ${hemL} ${A.hemY}
+        C ${A.waistL - 5} ${A.waistY + (bulgeY - A.waistY) * 0.6} ${A.centerX - bulgeHalf} ${bulgeY - 45} ${A.centerX - bulgeHalf} ${bulgeY}
+        C ${A.centerX - bulgeHalf} ${bulgeY + 35} ${hemL - 8} ${A.hemY - 25} ${hemL} ${A.hemY}
         L ${hemR} ${A.hemY}
-        C ${hemR + 60} ${A.hemY - (A.hemY - A.waistY) * 0.15} ${A.waistR + 5} ${A.waistY + (A.hemY - A.waistY) * 0.25} ${A.waistR} ${A.waistY} Z`,
+        C ${hemR + 8} ${A.hemY - 25} ${A.centerX + bulgeHalf} ${bulgeY + 35} ${A.centerX + bulgeHalf} ${bulgeY}
+        C ${A.centerX + bulgeHalf} ${bulgeY - 45} ${A.waistR + 5} ${A.waistY + (bulgeY - A.waistY) * 0.6} ${A.waistR} ${A.waistY} Z`,
   };
 };
 
@@ -622,25 +625,32 @@ silhouette.empire = (A) => {
 // 긴 곡선으로 풍성하게 퍼진다(가슴~헴까지 이어지는 프린세스 심 절개 특유의 라인).
 // 벨라인보다 플레어 구간이 짧아(hip~hem) 같은 헴 폭이어도 더 급격하고 드라마틱하게 보인다
 silhouette.princess = (A) => {
-  const hemHalf = (A.hipR - A.centerX) + 130;
+  const hemHalf = (A.hipR - A.centerX) + 140;
   const hemL = A.centerX - hemHalf, hemR = A.centerX + hemHalf;
-  const midY = A.hipY + (A.hemY - A.hipY) * 0.55;
+  const midY = A.hipY + (A.hemY - A.hipY) * 0.5;
   const hipHalf = A.hipR - A.centerX;
-  const midHalf = hipHalf + (hemHalf - hipHalf) * 0.65;
-  const foldLines = buildFoldLines([
-    { y: A.waistY + 6, leftX: A.waistL, rightX: A.waistR },
-    { y: A.hipY, leftX: A.hipL, rightX: A.hipR },
-    { y: midY, leftX: A.centerX - midHalf, rightX: A.centerX + midHalf },
-    { y: A.hemY - 6, leftX: hemL, rightX: hemR },
-  ]);
+  const midHalf = hipHalf + (hemHalf - hipHalf) * 0.45;
+  const foldLines = buildFoldLines(
+    [
+      { y: A.waistY + 6, leftX: A.waistL, rightX: A.waistR },
+      { y: A.hipY, leftX: A.hipL, rightX: A.hipR },
+      { y: midY, leftX: A.centerX - midHalf, rightX: A.centerX + midHalf },
+      { y: A.hemY - 6, leftX: hemL, rightX: hemR },
+    ],
+    [0.2, 0.35, 0.5, 0.65, 0.8],
+  );
+  // 벨라인(돔 형태로 부풀었다 좁혀짐)과 달리, 골반에서 헴까지 거의 곧게 넓어지기만 하는
+  // 직선에 가까운 플레어로 그려 "가슴~헴까지 이어지는 절개선" 특유의 정돈된 라인을 표현한다
   return {
     waistY: A.waistY,
     foldLines,
     d: `M ${A.waistL} ${A.waistY}
         L ${A.hipL} ${A.hipY}
-        C ${A.hipL - 5} ${A.hipY + (A.hemY - A.hipY) * 0.25} ${hemL - 50} ${A.hemY - (A.hemY - A.hipY) * 0.15} ${hemL} ${A.hemY}
+        L ${A.centerX - midHalf} ${midY}
+        C ${A.centerX - midHalf - 3} ${midY + (A.hemY - midY) * 0.5} ${hemL - 6} ${A.hemY - 25} ${hemL} ${A.hemY}
         L ${hemR} ${A.hemY}
-        C ${hemR + 50} ${A.hemY - (A.hemY - A.hipY) * 0.15} ${A.hipR + 5} ${A.hipY + (A.hemY - A.hipY) * 0.25} ${A.hipR} ${A.hipY}
+        C ${hemR + 6} ${A.hemY - 25} ${A.centerX + midHalf + 3} ${midY + (A.hemY - midY) * 0.5} ${A.centerX + midHalf} ${midY}
+        L ${A.hipR} ${A.hipY}
         L ${A.waistR} ${A.waistY} Z`,
   };
 };
