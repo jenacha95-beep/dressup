@@ -630,28 +630,25 @@ silhouette.princess = (A) => {
   const hemL = A.centerX - hemHalf, hemR = A.centerX + hemHalf;
   const midY = A.hipY + (A.hemY - A.hipY) * 0.5;
   const hipHalf = A.hipR - A.centerX;
-  const midHalf = hipHalf + (hemHalf - hipHalf) * 0.45;
-  const foldLines = buildFoldLines(
-    [
-      { y: A.waistY + 6, leftX: A.waistL, rightX: A.waistR },
-      { y: A.hipY, leftX: A.hipL, rightX: A.hipR },
-      { y: midY, leftX: A.centerX - midHalf, rightX: A.centerX + midHalf },
-      { y: A.hemY - 6, leftX: hemL, rightX: hemR },
-    ],
-    [0.2, 0.35, 0.5, 0.65, 0.8],
-  );
-  // 벨라인(돔 형태로 부풀었다 좁혀짐)과 달리, 골반에서 헴까지 거의 곧게 넓어지기만 하는
-  // 직선에 가까운 플레어로 그려 "가슴~헴까지 이어지는 절개선" 특유의 정돈된 라인을 표현한다
+  const midHalf = hipHalf + (hemHalf - hipHalf) * 0.5;
+  const foldLines = buildFoldLines([
+    { y: A.waistY + 6, leftX: A.waistL, rightX: A.waistR },
+    { y: A.hipY, leftX: A.hipL, rightX: A.hipR },
+    { y: midY, leftX: A.centerX - midHalf, rightX: A.centerX + midHalf },
+    { y: A.hemY - 6, leftX: hemL, rightX: hemR },
+  ]);
+  // 벨라인(돔 형태로 부풀었다 좁혀짐)과 달리, 골반에서 헴까지 하나의 매끄러운 곡선
+  // (컨트롤 포인트 하나짜리 구간 나누지 않음)으로 고르게 넓어지는 풍성한 플레어로
+  // 그린다 — 골반 바로 아래부터 이미 상당히 넓어지기 시작해야 아래쪽에서만 갑자기
+  // 벌어지는 머메이드처럼 안 보인다
   return {
     waistY: A.waistY,
     foldLines,
     d: `M ${A.waistL} ${A.waistY}
         L ${A.hipL} ${A.hipY}
-        L ${A.centerX - midHalf} ${midY}
-        C ${A.centerX - midHalf - 3} ${midY + (A.hemY - midY) * 0.5} ${hemL - 6} ${A.hemY - 25} ${hemL} ${A.hemY}
+        C ${A.hipL - 10} ${A.hipY + (A.hemY - A.hipY) * 0.45} ${hemL - 35} ${A.hemY - 75} ${hemL} ${A.hemY}
         L ${hemR} ${A.hemY}
-        C ${hemR + 6} ${A.hemY - 25} ${A.centerX + midHalf + 3} ${midY + (A.hemY - midY) * 0.5} ${A.centerX + midHalf} ${midY}
-        L ${A.hipR} ${A.hipY}
+        C ${hemR + 35} ${A.hemY - 75} ${A.hipR + 10} ${A.hipY + (A.hemY - A.hipY) * 0.45} ${A.hipR} ${A.hipY}
         L ${A.waistR} ${A.waistY} Z`,
   };
 };
