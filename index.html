@@ -826,6 +826,56 @@ neckline.twisthalter = (A) => {
 // 새 도형을 그리지 않고 기본값(sweetheart)을 재사용한다 (SPEC.md §3.4, §4 기본값)
 neckline.other = neckline.sweetheart;
 
+// offshoulder/keyhole/highneck은 칩 목록/인코딩 배열에서는 뺐지만(사용자 요청), 이 세 값을
+// 이미 저장한 기존 기록이 있으면 렌더링 시 neckline[id]가 함수를 못 찾아 앱 전체가
+// 하얗게 죽는 치명적 버그가 있었다 — 기존 기록 호환을 위해 함수 자체는 남겨둔다
+neckline.offshoulder = (A) => {
+  const offY = A.bustY - 15;
+  return {
+    strapless: true,
+    d: `M ${A.bustL} ${offY}
+        Q ${A.centerX} ${offY - 6} ${A.bustR} ${offY}`,
+  };
+};
+
+neckline.keyhole = (A) => {
+  const dipY = A.shoulderY + 55;
+  const holeTopY = dipY + 10;
+  return {
+    strapless: false,
+    d: `M ${A.shoulderL} ${A.shoulderY}
+        Q ${A.centerX} ${dipY} ${A.shoulderR} ${A.shoulderY}`,
+    detailLines: [
+      `M ${A.centerX} ${holeTopY}
+       Q ${A.centerX - 8} ${holeTopY + 8} ${A.centerX - 6} ${holeTopY + 16}
+       Q ${A.centerX - 4} ${holeTopY + 24} ${A.centerX} ${holeTopY + 24}
+       Q ${A.centerX + 4} ${holeTopY + 24} ${A.centerX + 6} ${holeTopY + 16}
+       Q ${A.centerX + 8} ${holeTopY + 8} ${A.centerX} ${holeTopY} Z`,
+    ],
+  };
+};
+
+neckline.highneck = (A) => {
+  const collarTopY = A.neckY - 25;
+  const neckHalf = 20;
+  const holeTopY = collarTopY + 18;
+  return {
+    strapless: false,
+    d: `M ${A.shoulderL} ${A.shoulderY}
+        Q ${A.shoulderL + 5} ${A.neckY + 5} ${A.centerX - neckHalf} ${collarTopY + 15}
+        Q ${A.centerX - neckHalf + 3} ${collarTopY} ${A.centerX} ${collarTopY - 4}
+        Q ${A.centerX + neckHalf - 3} ${collarTopY} ${A.centerX + neckHalf} ${collarTopY + 15}
+        Q ${A.shoulderR - 5} ${A.neckY + 5} ${A.shoulderR} ${A.shoulderY}`,
+    detailLines: [
+      `M ${A.centerX} ${holeTopY}
+       Q ${A.centerX - 6} ${holeTopY + 6} ${A.centerX - 4} ${holeTopY + 12}
+       Q ${A.centerX - 3} ${holeTopY + 18} ${A.centerX} ${holeTopY + 18}
+       Q ${A.centerX + 3} ${holeTopY + 18} ${A.centerX + 4} ${holeTopY + 12}
+       Q ${A.centerX + 6} ${holeTopY + 6} ${A.centerX} ${holeTopY} Z`,
+    ],
+  };
+};
+
 // 어깨점에서 목 가까이까지 높게 올라간 뒤(하이넥에 가까운 컬러 라인), 다시 정중앙에서
 // 완만하게 파여 내려오는 넥라인 (퀸앤). 옆쪽은 비침 소재를 암시하는 높은 라인, 중앙은
 // 얕은 하트형 다이로 표현한다
@@ -961,6 +1011,10 @@ sleeve.long = (A) => ({ d: `${sleevePetal(A, -1, 4, 180, 13, 7)} ${sleevePetal(A
 sleeve.puff = (A) => ({ d: `${sleevePetal(A, -1, 24, 42, 36, 10)} ${sleevePetal(A, 1, 24, 42, 36, 10)}` });
 // 새 도형을 그리지 않고 기본값(none, 즉 민소매)을 재사용한다 (SPEC.md §3.4, §4 기본값)
 sleeve.other = sleeve.none;
+// detachable(탈부착소매)은 칩 목록/인코딩 배열에서는 뺐지만, 이미 저장한 기존 기록이
+// sleeve:'detachable'을 참조하면 sleeve[id]가 함수를 못 찾아 앱이 하얗게 죽는다 —
+// 기존 기록 호환을 위해 긴소매 모양으로라도 안전하게 렌더링되게 남겨둔다
+sleeve.detachable = sleeve.long;
 
 // 오프숄더 밴드 소매 — 팔 위를 가로지르는 넓은 밴드가 어깨 바깥까지 뻗고, 중앙 앞에서
 // 천이 모여 매듭지는 모양(참고 이미지 기준). 다른 소매처럼 어깨점에서 아래로 늘어지는
