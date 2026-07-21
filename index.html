@@ -495,28 +495,29 @@ silhouette.aline = (A) => {
   };
 };
 
-// 허리에서 밑단까지 진짜 돔/벨 모양으로 부풀리는 실루엣 — 스커트 중간이 최종 헴 폭보다도
-// 더 볼록 튀어나왔다가 다시 살짝 좁혀져 헴으로 떨어지는 2단 곡선을 써서, 프린세스라인처럼
-// 한 방향으로만 넓어지는 플레어와 뚜렷이 구분되는 둥근 실루엣을 만든다(참고 이미지 기준)
+// 허리 바로 아래에서 빠르게 아치를 그리며 최대 폭에 도달한 뒤, 그 아래로는 거의 수직에
+// 가깝게 헴까지 곧게 떨어지는 돔 형태 실루엣 (참고 스케치 기준). 이전 버전은 스커트
+// 중간에서 최종 헴 폭보다 더 부풀렸다가 되돌아오는 2단 곡선을 썼는데, 그 부풀린 지점이
+// viewBox(0~400) 폭을 벗어나 옆이 잘려 보이는 문제가 있었다 — 지금은 최대 폭이 곧 헴 폭이라
+// 그런 문제가 없다
 silhouette.ballgown = (A) => {
-  const hemHalf = (A.hipR - A.centerX) + 145;
+  const hemHalf = (A.hipR - A.centerX) + 140;
   const hemL = A.centerX - hemHalf, hemR = A.centerX + hemHalf;
-  const bulgeHalf = hemHalf + 25;
-  const bulgeY = A.waistY + (A.hemY - A.waistY) * 0.62;
+  const archY = A.waistY + (A.hemY - A.waistY) * 0.22;
   const foldLines = buildFoldLines([
     { y: A.waistY + 6, leftX: A.waistL, rightX: A.waistR },
-    { y: bulgeY, leftX: A.centerX - bulgeHalf, rightX: A.centerX + bulgeHalf },
+    { y: archY, leftX: hemL, rightX: hemR },
     { y: A.hemY - 6, leftX: hemL, rightX: hemR },
   ]);
   return {
     waistY: A.waistY,
     foldLines,
     d: `M ${A.waistL} ${A.waistY}
-        C ${A.waistL - 5} ${A.waistY + (bulgeY - A.waistY) * 0.6} ${A.centerX - bulgeHalf} ${bulgeY - 45} ${A.centerX - bulgeHalf} ${bulgeY}
-        C ${A.centerX - bulgeHalf} ${bulgeY + 35} ${hemL - 8} ${A.hemY - 25} ${hemL} ${A.hemY}
+        C ${A.waistL - 10} ${A.waistY + (archY - A.waistY) * 0.3} ${hemL - 25} ${archY - 45} ${hemL} ${archY}
+        L ${hemL} ${A.hemY}
         L ${hemR} ${A.hemY}
-        C ${hemR + 8} ${A.hemY - 25} ${A.centerX + bulgeHalf} ${bulgeY + 35} ${A.centerX + bulgeHalf} ${bulgeY}
-        C ${A.centerX + bulgeHalf} ${bulgeY - 45} ${A.waistR + 5} ${A.waistY + (bulgeY - A.waistY) * 0.6} ${A.waistR} ${A.waistY} Z`,
+        L ${hemR} ${archY}
+        C ${hemR + 25} ${archY - 45} ${A.waistR + 10} ${A.waistY + (archY - A.waistY) * 0.3} ${A.waistR} ${A.waistY} Z`,
   };
 };
 
