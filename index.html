@@ -1045,19 +1045,22 @@ function registerTexturePattern(svgNS, defs, textureId) {
 // 허공에 뜬 것처럼 어색해 보이는 문제를, 각 넥라인을 손질하는 대신 공통 배경 실루엣을 깔아
 // 해결한다 — 보디스가 그 위를 덮으므로 네크라인이 파인 부분에서만 드러난다
 function torsoBase(A) {
-  const neckHalf = 12;
-  const neckTopY = A.neckY - 25;
-  const tuckY = A.shoulderY - 12;
-  const bustBottomY = A.bustY + 18;
+  const neckHalf = 10;
+  const neckTopY = A.neckY - 22;
+  const tuckY = A.shoulderY - 10;
+  const waistInY = A.bustY + 10;
+  // 어깨 아래에서 가슴 폭보다도 더 좁게 들어가는 지점 — 어깨선(shoulderL/R)은 그대로 두되
+  // 그 아래를 확 좁혀서, 넓적한 사각 몸통이 아니라 잘록한 실루엣으로 보이게 한다
+  const waistInHalf = (A.bustR - A.bustL) / 2 - 10;
   return `M ${A.centerX - neckHalf} ${neckTopY}
       L ${A.centerX - neckHalf} ${tuckY}
-      Q ${A.centerX - neckHalf - 8} ${A.shoulderY - 2} ${A.shoulderL} ${A.shoulderY}
-      Q ${A.shoulderL - 2} ${A.bustY - 20} ${A.bustL} ${bustBottomY}
-      L ${A.bustR} ${bustBottomY}
-      Q ${A.shoulderR + 2} ${A.bustY - 20} ${A.shoulderR} ${A.shoulderY}
-      Q ${A.centerX + neckHalf + 8} ${A.shoulderY - 2} ${A.centerX + neckHalf} ${tuckY}
+      Q ${A.centerX - neckHalf - 6} ${A.shoulderY - 4} ${A.shoulderL} ${A.shoulderY}
+      Q ${A.shoulderL + 6} ${A.bustY - 5} ${A.centerX - waistInHalf} ${waistInY}
+      L ${A.centerX + waistInHalf} ${waistInY}
+      Q ${A.shoulderR - 6} ${A.bustY - 5} ${A.shoulderR} ${A.shoulderY}
+      Q ${A.centerX + neckHalf + 6} ${A.shoulderY - 4} ${A.centerX + neckHalf} ${tuckY}
       L ${A.centerX + neckHalf} ${neckTopY}
-      Q ${A.centerX} ${neckTopY - 8} ${A.centerX - neckHalf} ${neckTopY} Z`;
+      Q ${A.centerX} ${neckTopY - 6} ${A.centerX - neckHalf} ${neckTopY} Z`;
 }
 
 // 마네킹 팔 — torsoBase만으로는 어깨 아래가 허전해 보이고, 특히 소매가 두께 없이 평면적으로
