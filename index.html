@@ -26,6 +26,9 @@
   .dress-outline.other {
     stroke-dasharray: 4 3;
   }
+  .mesh-overlay {
+    stroke-dasharray: 2 2;
+  }
   .fold-line {
     fill: none;
     stroke: var(--outline);
@@ -368,9 +371,10 @@ const LABEL = {
     },
     neckline: {
       sweetheart: '스위트하트', v: 'V넥', square: '스퀘어넥', halter: '홀터넥',
-      offshoulder: '오프숄더', bateau: '보트넥', illusion: '일루전', straight: '스트레이트',
+      offshoulder: '오프숄더', bateau: '보트넥', illusion: '일자 일루전넥', straight: '스트레이트',
       jewel: '주얼넥', scoop: '스쿱넥', twisthalter: '트위스트홀터넥', other: '기타',
       queenanne: '퀸앤넥', keyhole: '키홀넥', highneck: '하이넥', surplice: '서플리스넥',
+      illusionheart: '하트 일루전넥',
     },
     sleeve: {
       none: '민소매', cap: '캡소매', short: '반팔', long: '긴소매',
@@ -402,10 +406,12 @@ const LABEL = {
     neckline: {
       sweetheart: 'sweetheart neckline', v: 'V-neck', square: 'square neckline',
       halter: 'halter neckline', offshoulder: 'off-the-shoulder neckline',
-      bateau: 'bateau (boat) neckline', illusion: 'illusion neckline',
+      bateau: 'bateau (boat) neckline',
+      illusion: 'illusion neckline with a sheer mesh yoke over a straight-across lining',
       straight: 'straight-across neckline', jewel: 'jewel neckline', scoop: 'scoop neckline',
       twisthalter: 'twist halter neckline', queenanne: 'Queen Anne neckline',
       keyhole: 'keyhole neckline', highneck: 'high neckline', surplice: 'surplice (wrap) neckline',
+      illusionheart: 'illusion neckline with a sheer mesh yoke over a sweetheart lining',
       other: 'custom neckline',
     },
     sleeve: {
@@ -442,7 +448,7 @@ const SILHOUETTE_CHIP_ORDER = ['aline', 'ballgown', 'princess', 'empire', 'sheat
 // jewel/scoop/queenanne/keyhole/highneck/surplice는 사용자가 보내준 넥라인 레퍼런스
 // 시트에서 기존 종류와 겹치지 않는 것만 골라 배열 끝에 추가한 것 — 재배열 금지 규칙 때문에
 // other 뒤에도 새 항목을 이어 붙인다. 칩 표시 순서는 NECKLINE_CHIP_ORDER가 따로 담당한다
-const NECKLINE_ORDER = ['sweetheart', 'v', 'square', 'halter', 'offshoulder', 'bateau', 'illusion', 'straight', 'jewel', 'scoop', 'twisthalter', 'other', 'queenanne', 'keyhole', 'highneck', 'surplice'];
+const NECKLINE_ORDER = ['sweetheart', 'v', 'square', 'halter', 'offshoulder', 'bateau', 'illusion', 'straight', 'jewel', 'scoop', 'twisthalter', 'other', 'queenanne', 'keyhole', 'highneck', 'surplice', 'illusionheart'];
 const NECKLINE_CHIP_ORDER = NECKLINE_ORDER.filter((id) => id !== 'other');
 // detachable(탈부착소매)은 기능 자체를 제거했다 (사용자 요청). offshoulder(오프숄더 밴드)는
 // 참고 이미지 기반으로 새로 추가한 것 — 재배열 금지 규칙 때문에 other 뒤에 이어 붙인다
@@ -746,11 +752,17 @@ neckline.bateau = (A) => {
 };
 
 // 어깨점에서 목 가까이까지 높게 차오르는, 비침 소재 패널을 암시하는 넥라인
+// 일자 일루전 넥 — 어깨~목 사이 비침 메시(mesh)를 별도 영역으로 표시해, 실제 안감이
+// 가슴선을 일자로 가로지르는 라인 위에 비침 소재가 덧대어진 걸 구분해서 보여준다
 neckline.illusion = (A) => {
   return {
     strapless: false,
     d: `M ${A.shoulderL} ${A.shoulderY}
         Q ${A.centerX} ${A.neckY} ${A.shoulderR} ${A.shoulderY}`,
+    mesh: `M ${A.shoulderL} ${A.shoulderY}
+        Q ${A.centerX} ${A.neckY} ${A.shoulderR} ${A.shoulderY}
+        L ${A.bustR} ${A.bustY}
+        L ${A.bustL} ${A.bustY} Z`,
   };
 };
 
@@ -901,6 +913,30 @@ neckline.surplice = (A) => {
   };
 };
 
+// 하트 일루전 넥 — 어깨~목 사이 비침 메시 아래로 하트(스위트하트)형 안감이 비치는 넥라인.
+// 일자 일루전 넥과 바깥쪽 어깨~목 곡선은 같고, 메시 안쪽 경계(안감 모양)만 하트로 다르다
+neckline.illusionheart = (A) => {
+  const peakY = A.bustY - 20;
+  const dipY = A.bustY + 10;
+  const peakHalf = 12;
+  const peakL = A.bustL + peakHalf;
+  const peakR = A.bustR - peakHalf;
+  // 메시 영역의 안쪽 경계로 하트 곡선을 반대 방향(bustR → bustL)으로 그대로 되짚어가야
+  // 도형이 닫힌다 — 각 구간의 컨트롤 포인트 순서도 함께 뒤집는다
+  return {
+    strapless: false,
+    d: `M ${A.shoulderL} ${A.shoulderY}
+        Q ${A.centerX} ${A.neckY} ${A.shoulderR} ${A.shoulderY}`,
+    mesh: `M ${A.shoulderL} ${A.shoulderY}
+        Q ${A.centerX} ${A.neckY} ${A.shoulderR} ${A.shoulderY}
+        L ${A.bustR} ${A.bustY}
+        Q ${A.bustR + 3} ${peakY - 6} ${peakR} ${peakY}
+        C ${peakR - 20} ${peakY + 8} ${A.centerX + 16} ${dipY - 12} ${A.centerX} ${dipY}
+        C ${A.centerX - 16} ${dipY - 12} ${peakL + 20} ${peakY + 8} ${peakL} ${peakY}
+        Q ${A.bustL - 3} ${peakY - 6} ${A.bustL} ${A.bustY} Z`,
+  };
+};
+
 // 실루엣이 쓰는 waistY가 기본 허리선(A.waistY)이 아닐 때(엠파이어처럼 가슴 아래로 올라간 경우)
 // 가슴선~기본 허리선 사이를 보간해 그 높이에서의 좌우 폭을 구한다. waistY가 A.waistY면 그대로 A.waistL/R
 function waistPointsAt(A, waistY) {
@@ -921,7 +957,7 @@ function stripMove(d) {
 // buildFullDressSvg가 보디스 위에 얹을 수 있게 한다
 function buildBodice(A, necklineId, waistY, hasSleeve) {
   const { waistL, waistR } = waistPointsAt(A, waistY);
-  const { d: necklineD, strapless, detailLines, overlay } = neckline[necklineId](A);
+  const { d: necklineD, strapless, detailLines, overlay, mesh } = neckline[necklineId](A);
   const necklineRest = stripMove(necklineD);
 
   // 스트랩리스는 옆선이 가슴선(bustY)에서 뚝 끊긴다. 소매가 있으면 어깨점에 붙는 소매와
@@ -946,7 +982,7 @@ function buildBodice(A, necklineId, waistY, hasSleeve) {
       ${necklineRest}
       C ${A.shoulderR - (A.shoulderR - A.bustR) * 0.3} ${A.shoulderY + (A.bustY - A.shoulderY) * 0.75} ${waistR} ${A.bustY} ${waistR} ${waistY} Z`;
 
-  return { d, detailLines: detailLines || [], overlay: overlay || null };
+  return { d, detailLines: detailLines || [], overlay: overlay || null, mesh: mesh || null };
 }
 
 // 소매 한쪽(어깨점 기준)을 그리는 헬퍼. side: 왼쪽=-1(shoulderL), 오른쪽=1(shoulderR)
@@ -1224,7 +1260,7 @@ function buildFullDressSvg(silhouetteId, necklineId, sleeveId, skirtTextureId, b
   svg.appendChild(defs);
 
   const { d: skirtD, waistY, foldLines } = silhouette[silhouetteId](A);
-  const { d: bodiceD, detailLines: bodiceDetailLines, overlay: bodiceOverlay } = buildBodice(A, necklineId, waistY, sleeveId !== 'none');
+  const { d: bodiceD, detailLines: bodiceDetailLines, overlay: bodiceOverlay, mesh: bodiceMesh } = buildBodice(A, necklineId, waistY, sleeveId !== 'none');
 
   // 0. 마네킹 베이스 — 넥라인/보디스보다 먼저 그려서 항상 맨 뒤에 깔린다 (팔까지 포함)
   const torsoPath = document.createElementNS(svgNS, 'path');
@@ -1287,6 +1323,16 @@ function buildFullDressSvg(silhouetteId, necklineId, sleeveId, skirtTextureId, b
     p.setAttribute('d', bodiceOverlay);
     p.setAttribute('fill', bodiceFillUrl);
     p.setAttribute('class', 'dress-outline');
+    svg.appendChild(p);
+  }
+
+  // 일루전 넥라인의 비침 메시 영역 — 고른 보디스 텍스처와 무관하게 항상 튤 패턴으로 덮어
+  // "이 부분만 비쳐 보인다"는 걸 표시한다. 실제 안감(하트/일자) 경계 위에 겹쳐 그린다
+  if (bodiceMesh) {
+    const p = document.createElementNS(svgNS, 'path');
+    p.setAttribute('d', bodiceMesh);
+    p.setAttribute('fill', registerTexturePattern(svgNS, defs, 'tulle'));
+    p.setAttribute('class', 'dress-outline mesh-overlay');
     svg.appendChild(p);
   }
 
@@ -2249,6 +2295,7 @@ function loadImage(src) {
 const EXPORT_SVG_STYLE = `
   .dress-outline { stroke: #8A7A6D; stroke-width: 1; }
   .dress-outline.other { stroke-dasharray: 4 3; }
+  .mesh-overlay { stroke-dasharray: 2 2; }
   .fold-line { fill: none; stroke: #8A7A6D; stroke-width: 0.6; opacity: 0.45; }
   .torso-outline { fill: none; stroke: #8A7A6D; stroke-width: 0.8; opacity: 0.35; }
   .waist-seam { fill: none; stroke: #8A7A6D; stroke-width: 1.3; }
