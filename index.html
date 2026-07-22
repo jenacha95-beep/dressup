@@ -407,12 +407,12 @@ const LABEL = {
       bateau: '보트넥', illusion: '일자 일루전넥', straight: '스트레이트',
       jewel: '주얼넥', scoop: '스쿱넥', other: '기타',
       queenanne: '퀸앤넥', surplice: '서플리스넥', illusionheart: '하트 일루전넥',
-      sweetheartdeep: '딥 스위트하트',
+      sweetheartdeep: '딥 스위트하트', bardot: '바르도넥',
     },
     sleeve: {
       none: '민소매', cap: '캡소매', short: '반팔', long: '긴소매',
       puff: '퍼프소매', other: '기타', offshoulder: '오프숄더 밴드(리본)',
-      offshoulderplain: '오프숄더 밴드(민무늬)',
+      offshoulderplain: '오프숄더 밴드(민무늬)', coldshoulder: '콜드숄더 소매',
     },
     // 원단(베이스)과 오버레이(장식)를 분리 — 웨딩드레스는 기본 원단 위에 레이스/비즈 등
     // 오버레이가 따로 얹히는 경우가 많아서 소재 선택을 두 축으로 나눴다 (사용자 요청)
@@ -455,6 +455,7 @@ const LABEL = {
       surplice: 'surplice (wrap) neckline',
       illusionheart: 'illusion neckline with a sheer mesh yoke over a sweetheart lining',
       sweetheartdeep: 'deep-plunge sweetheart neckline with a low, narrow center dip revealing cleavage',
+      bardot: 'Bardot neckline — a wide, nearly straight neckline dropped below the shoulder line with a subtle shelf-like lift at each end, both shoulders left completely bare with no straps',
       other: 'custom neckline',
     },
     sleeve: {
@@ -463,6 +464,7 @@ const LABEL = {
       puff: 'puff sleeves', other: 'custom sleeves',
       offshoulder: 'off-the-shoulder draped sleeve band with a gathered bow/knot at center front',
       offshoulderplain: 'off-the-shoulder draped sleeve band with a smooth folded finish and no bow, knot, or gathering at center front',
+      coldshoulder: 'cold-shoulder long sleeves — fitted sleeves with a round cutout exposing bare skin just below the shoulder, the sleeve fabric continues down the arm below the cutout',
     },
     material: {
       mikado: 'mikado silk', satin: 'satin', crepe: 'crepe', taffeta: 'taffeta',
@@ -502,14 +504,14 @@ const SILHOUETTE_CHIP_ORDER = ['aline', 'ballgown', 'princess', 'empire', 'sheat
 // offshoulder/keyhole/highneck/twisthalter는 사용자 요청으로 기능 자체를 제거했다(탈부착소매와
 // 같은 이유 — 실사용 데이터가 없는 개발 초기라 인코딩 배열에서도 완전히 뺐다). 칩 표시 순서는
 // NECKLINE_CHIP_ORDER가 따로 담당한다
-const NECKLINE_ORDER = ['sweetheart', 'v', 'square', 'halter', 'bateau', 'illusion', 'straight', 'jewel', 'scoop', 'other', 'queenanne', 'surplice', 'illusionheart', 'sweetheartdeep'];
+const NECKLINE_ORDER = ['sweetheart', 'v', 'square', 'halter', 'bateau', 'illusion', 'straight', 'jewel', 'scoop', 'other', 'queenanne', 'surplice', 'illusionheart', 'sweetheartdeep', 'bardot'];
 // 사용자가 정리한 순서대로 직접 나열 (기타 제외) — 서플리스는 V넥 바로 다음, 딥 스위트하트는
-// 스위트하트 바로 다음에 위치
-const NECKLINE_CHIP_ORDER = ['sweetheart', 'sweetheartdeep', 'illusionheart', 'v', 'surplice', 'square', 'straight', 'illusion', 'bateau', 'jewel', 'scoop', 'halter', 'queenanne'];
+// 스위트하트 바로 다음, 바르도넥은 참고 이미지 분류를 따라 스퀘어넥 바로 다음에 위치
+const NECKLINE_CHIP_ORDER = ['sweetheart', 'sweetheartdeep', 'illusionheart', 'v', 'surplice', 'square', 'bardot', 'straight', 'illusion', 'bateau', 'jewel', 'scoop', 'halter', 'queenanne'];
 // detachable(탈부착소매)은 기능 자체를 제거했다 (사용자 요청). offshoulder(오프숄더 밴드,
-// 리본 버전)/offshoulderplain(매듭 없는 버전)은 참고 이미지 기반으로 새로 추가한 것 —
-// 재배열 금지 규칙 때문에 other 뒤에 이어 붙인다
-const SLEEVE_ORDER = ['none', 'cap', 'short', 'long', 'puff', 'other', 'offshoulder', 'offshoulderplain'];
+// 리본 버전)/offshoulderplain(매듭 없는 버전)/coldshoulder(콜드숄더)는 참고 이미지 기반으로
+// 새로 추가한 것 — 재배열 금지 규칙 때문에 other 뒤에 이어 붙인다
+const SLEEVE_ORDER = ['none', 'cap', 'short', 'long', 'puff', 'other', 'offshoulder', 'offshoulderplain', 'coldshoulder'];
 const SLEEVE_CHIP_ORDER = SLEEVE_ORDER.filter((id) => id !== 'other');
 // 원단(소재)과 오버레이(장식)를 두 축으로 나눈 텍스처 모델 (사용자 요청). 파츠(보디스/
 // 스커트/소매)마다 실제로 쓰이는 소재 목록은 다르지만, 오버레이 목록은 세 파츠가 동일하다.
@@ -820,6 +822,20 @@ neckline.square = (A) => {
   };
 };
 
+// 바르도넥 — 스트랩 없이 어깨가 완전히 드러나고, 가슴선을 넓고 거의 일자로 가로지르되
+// 양끝이 셸프 브라처럼 살짝 위로 들리는 형태 (참고 이미지 기준)
+neckline.bardot = (A) => {
+  const liftY = A.bustY - 8;
+  const shelfHalf = 26;
+  return {
+    strapless: true,
+    d: `M ${A.bustL} ${A.bustY}
+        Q ${A.bustL + 10} ${liftY} ${A.bustL + shelfHalf} ${liftY}
+        L ${A.bustR - shelfHalf} ${liftY}
+        Q ${A.bustR - 10} ${liftY} ${A.bustR} ${A.bustY}`,
+  };
+};
+
 // 가슴선에서 시작해(어깨는 드러남) 목 앞에서 좁아져 둥근 앞고리로 마감된다. 목 뒤로
 // 넘어가 접히는 부분은 이 앞고리와 겹치는 별도의 둥근 조각(overlay)으로 정면에 그대로
 // 노출해 표현한다 — 실제로는 안 보이는 부분이지만, 실루엣을 명확히 남기기 위해 정면에
@@ -1093,24 +1109,25 @@ function buildBodice(A, necklineId, waistY, sleeveId) {
   return { d, detailLines: detailLines || [], overlay: overlay || null, mesh: mesh || null };
 }
 
-// 소매 한쪽(어깨점 기준)을 그리는 헬퍼. side: 왼쪽=-1(shoulderL), 오른쪽=1(shoulderR)
-// reachX/reachY = 어깨점에서 소매 끝까지의 가로/세로 거리, bulge = 바깥쪽으로 부푸는 정도,
-// cuffHalf = 소매 끝(손목 쪽) 폭의 절반. 어깨 쪽도 topHalf만큼 폭을 둬서, 한 점으로
-// 뾰족하게 모이는 리본이 아니라 원통형 팔처럼 두께가 있게 만든다
-function sleevePetal(A, side, reachX, reachY, bulge, cuffHalf) {
+// 소매 한쪽(기준점 topY, 기본은 어깨점)을 그리는 헬퍼. side: 왼쪽=-1(shoulderL), 오른쪽=1(shoulderR)
+// reachX/reachY = 기준점에서 소매 끝까지의 가로/세로 거리, bulge = 바깥쪽으로 부푸는 정도,
+// cuffHalf = 소매 끝(손목 쪽) 폭의 절반. 위쪽도 topHalf만큼 폭을 둬서, 한 점으로
+// 뾰족하게 모이는 리본이 아니라 원통형 팔처럼 두께가 있게 만든다. topY를 어깨점보다
+// 아래로 주면(콜드숄더처럼) 팔 중간부터 시작하는 소매 조각도 그릴 수 있다
+function sleevePetal(A, side, reachX, reachY, bulge, cuffHalf, topY = A.shoulderY) {
   const shoulderX = side === -1 ? A.shoulderL : A.shoulderR;
   const topHalf = 6;
   const outX = shoulderX + side * reachX;
-  const outY = A.shoulderY + reachY;
+  const outY = topY + reachY;
   const topInner = shoulderX - side * topHalf * 0.4;
   const topOuter = shoulderX + side * topHalf * 0.6;
   const botOuter = outX + side * cuffHalf;
   const botInner = outX - side * cuffHalf;
-  return `M ${topInner} ${A.shoulderY}
-      L ${topOuter} ${A.shoulderY}
-      C ${topOuter + side * bulge} ${A.shoulderY + reachY * 0.3} ${botOuter + side * bulge * 0.3} ${outY - reachY * 0.25} ${botOuter} ${outY}
+  return `M ${topInner} ${topY}
+      L ${topOuter} ${topY}
+      C ${topOuter + side * bulge} ${topY + reachY * 0.3} ${botOuter + side * bulge * 0.3} ${outY - reachY * 0.25} ${botOuter} ${outY}
       L ${botInner} ${outY}
-      C ${topInner - side * bulge * 0.25} ${A.shoulderY + reachY * 0.35} ${topInner - side * bulge * 0.1} ${A.shoulderY + reachY * 0.1} ${topInner} ${A.shoulderY} Z`;
+      C ${topInner - side * bulge * 0.25} ${topY + reachY * 0.35} ${topInner - side * bulge * 0.1} ${topY + reachY * 0.1} ${topInner} ${topY} Z`;
 }
 
 // 소매: 어깨점 기준 좌우 대칭 path (SPEC.md §3.2). 두 소매를 하나의 d에 서브패스로 담는다
@@ -1126,6 +1143,29 @@ sleeve.other = sleeve.none;
 // sleeve:'detachable'을 참조하면 sleeve[id]가 함수를 못 찾아 앱이 하얗게 죽는다 —
 // 기존 기록 호환을 위해 긴소매 모양으로라도 안전하게 렌더링되게 남겨둔다
 sleeve.detachable = sleeve.long;
+
+// 콜드숄더 소매 — 어깨점에서 짧게 이어지다 어깨 바로 아래에서 살이 드러나는 컷아웃(구멍)이
+// 뚫리고, 그 아래부터 다시 긴소매가 이어지는 형태 (참고 이미지 기준)
+sleeve.coldshoulder = (A) => {
+  const gapTopY = A.shoulderY + 8;
+  const gapBottomY = A.shoulderY + 46;
+  const capHalf = 5;
+  // 컷아웃이 좁은 틈이 아니라 둥근 구멍처럼 보이도록, cap 아랫변을 곡선으로 둥글린다
+  const cap = (side) => {
+    const shoulderX = side === -1 ? A.shoulderL : A.shoulderR;
+    const botOuter = shoulderX + side * 3;
+    const botInner = shoulderX - side * 3;
+    return `M ${shoulderX - side * capHalf * 0.4} ${A.shoulderY}
+        L ${shoulderX + side * capHalf * 0.6} ${A.shoulderY}
+        Q ${botOuter + side * 2} ${(A.shoulderY + gapTopY) / 2} ${botOuter} ${gapTopY}
+        Q ${shoulderX} ${gapTopY + 6} ${botInner} ${gapTopY}
+        Q ${botInner - side * 2} ${(A.shoulderY + gapTopY) / 2} ${shoulderX - side * capHalf * 0.4} ${A.shoulderY} Z`;
+  };
+  return {
+    d: `${cap(-1)} ${sleevePetal(A, -1, 4, 144, 13, 7, gapBottomY)}
+        ${cap(1)} ${sleevePetal(A, 1, 4, 144, 13, 7, gapBottomY)}`,
+  };
+};
 
 // 오프숄더 밴드 소매 — 팔 위를 가로지르는 넓은 밴드가 어깨 바깥까지 뻗는 모양(참고 이미지
 // 기준). 다른 소매처럼 어깨점에서 아래로 늘어지는 게 아니라, 어깨점을 가로질러 좌우로
