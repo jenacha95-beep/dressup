@@ -455,7 +455,7 @@ const LABEL = {
       surplice: 'surplice (wrap) neckline',
       illusionheart: 'illusion neckline with a sheer mesh yoke over a sweetheart lining',
       sweetheartdeep: 'deep-plunge sweetheart neckline with a low, narrow center dip revealing cleavage',
-      bardot: 'Bardot neckline — a wide, nearly straight neckline dropped below the shoulder line with a subtle shelf-like lift at each end, both shoulders left completely bare with no straps',
+      bardot: 'Bardot neckline — a wide, gently curved scoop neckline with no straps at all, sitting off the shoulders and leaving both shoulders completely bare',
       other: 'custom neckline',
     },
     sleeve: {
@@ -822,17 +822,15 @@ neckline.square = (A) => {
   };
 };
 
-// 바르도넥 — 스트랩 없이 어깨가 완전히 드러나고, 가슴선을 넓고 거의 일자로 가로지르되
-// 양끝이 셸프 브라처럼 살짝 위로 들리는 형태 (참고 이미지 기준)
+// 바르도넥 — 스트랩 없이 어깨가 완전히 드러나고, 가슴선을 넓고 완만하게 U자로 가로지르는
+// 형태 (참고 이미지 기준). 처음엔 8px짜리 살짝 들린 셸프 라인으로 만들었더니 칩 미리보기
+// 처럼 작게 보일 때 거의 일자와 구분이 안 갔다 — 눈에 띄게 다르도록 단순하고 확실한 넓은
+// U자 곡선으로 다시 그렸다
 neckline.bardot = (A) => {
-  const liftY = A.bustY - 8;
-  const shelfHalf = 26;
+  const dipY = A.bustY + 18;
   return {
     strapless: true,
-    d: `M ${A.bustL} ${A.bustY}
-        Q ${A.bustL + 10} ${liftY} ${A.bustL + shelfHalf} ${liftY}
-        L ${A.bustR - shelfHalf} ${liftY}
-        Q ${A.bustR - 10} ${liftY} ${A.bustR} ${A.bustY}`,
+    d: `M ${A.bustL} ${A.bustY} Q ${A.centerX} ${dipY} ${A.bustR} ${A.bustY}`,
   };
 };
 
@@ -1147,23 +1145,22 @@ sleeve.detachable = sleeve.long;
 // 콜드숄더 소매 — 어깨점에서 짧게 이어지다 어깨 바로 아래에서 살이 드러나는 컷아웃(구멍)이
 // 뚫리고, 그 아래부터 다시 긴소매가 이어지는 형태 (참고 이미지 기준)
 sleeve.coldshoulder = (A) => {
-  const gapTopY = A.shoulderY + 8;
-  const gapBottomY = A.shoulderY + 46;
-  const capHalf = 5;
-  // 컷아웃이 좁은 틈이 아니라 둥근 구멍처럼 보이도록, cap 아랫변을 곡선으로 둥글린다
+  // 처음엔 cap 아랫변을 곡선 3개로 둥글렸더니 칩 미리보기처럼 작게 보일 때 꼬인 리본
+  // 매듭처럼 보였다 — 작은 사다리꼴로 단순화하고, 컷아웃(빈 틈) 자체를 크게 키워서
+  // 어느 크기에서나 "어깨에 구멍이 뚫렸다"는 게 분명히 보이게 했다
+  const gapTopY = A.shoulderY + 6;
+  const gapBottomY = A.shoulderY + 50;
+  const capHalf = 6;
   const cap = (side) => {
     const shoulderX = side === -1 ? A.shoulderL : A.shoulderR;
-    const botOuter = shoulderX + side * 3;
-    const botInner = shoulderX - side * 3;
     return `M ${shoulderX - side * capHalf * 0.4} ${A.shoulderY}
         L ${shoulderX + side * capHalf * 0.6} ${A.shoulderY}
-        Q ${botOuter + side * 2} ${(A.shoulderY + gapTopY) / 2} ${botOuter} ${gapTopY}
-        Q ${shoulderX} ${gapTopY + 6} ${botInner} ${gapTopY}
-        Q ${botInner - side * 2} ${(A.shoulderY + gapTopY) / 2} ${shoulderX - side * capHalf * 0.4} ${A.shoulderY} Z`;
+        L ${shoulderX + side * 4} ${gapTopY}
+        L ${shoulderX - side * 4} ${gapTopY} Z`;
   };
   return {
-    d: `${cap(-1)} ${sleevePetal(A, -1, 4, 144, 13, 7, gapBottomY)}
-        ${cap(1)} ${sleevePetal(A, 1, 4, 144, 13, 7, gapBottomY)}`,
+    d: `${cap(-1)} ${sleevePetal(A, -1, 4, 140, 13, 7, gapBottomY)}
+        ${cap(1)} ${sleevePetal(A, 1, 4, 140, 13, 7, gapBottomY)}`,
   };
 };
 
