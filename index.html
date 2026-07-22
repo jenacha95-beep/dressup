@@ -1053,18 +1053,21 @@ function stripMove(d) {
 // 보디스 = 넥라인이 정하는 윗변 + 좌우 옆선 + (실루엣이 쓰는) 허리선.
 // 넥라인이 detailLines(예: 트위스트홀터의 교차 강조선)를 갖고 있으면 그대로 반환해
 // buildFullDressSvg가 보디스 위에 얹을 수 있게 한다
-function buildBodice(A, necklineId, waistY, hasSleeve) {
+function buildBodice(A, necklineId, waistY, sleeveId) {
   const { waistL, waistR } = waistPointsAt(A, waistY);
   const { d: necklineD, strapless, detailLines, overlay, mesh } = neckline[necklineId](A);
   const necklineRest = stripMove(necklineD);
+  const hasSleeve = sleeveId !== 'none';
 
   // 스트랩리스는 옆선이 가슴선(bustY)에서 뚝 끊긴다. 소매가 있으면 어깨점에 붙는 소매와
   // 사이에 빈 틈이 크게 보이는 문제가 있어서 옆선을 어깨점까지 올려 이어주지만, 소매가
   // 없을 때(민소매)까지 옆선을 올리면 아무 데도 안 이어지는 스트랩처럼 어색하게 남는다 —
   // 그래서 소매가 있을 때만 옆선을 올린다. 홀터 계열(홀터/트위스트홀터)은 목으로 올라가는
   // 자기 스트랩이 이미 있어서, 옆선까지 어깨로 올리면 이중 스트랩처럼 보여 이 둘은 소매
-  // 유무와 무관하게 항상 가슴선에서 끊는다
-  const useWing = strapless && hasSleeve && necklineId !== 'halter' && necklineId !== 'twisthalter';
+  // 유무와 무관하게 항상 가슴선에서 끊는다. 오프숄더 밴드는 어깨점이 아니라 어깨 아래
+  // 팔뚝을 가로질러 붙는 소매라 옆선을 어깨까지 올리면 오프숄더 특유의 맨 어깨가 끈으로
+  // 가려져 버린다 — 그래서 오프숄더일 때도 항상 가슴선에서 끊는다
+  const useWing = strapless && hasSleeve && necklineId !== 'halter' && necklineId !== 'twisthalter' && sleeveId !== 'offshoulder';
   const sideTopY = useWing ? A.shoulderY : A.bustY;
   const sideTopL = useWing ? A.shoulderL : A.bustL;
   const sideTopR = useWing ? A.shoulderR : A.bustR;
@@ -1426,7 +1429,7 @@ function buildFullDressSvg(silhouetteId, necklineId, sleeveId, textures, waistId
   svg.appendChild(defs);
 
   const { d: skirtD, waistY, foldLines } = silhouette[silhouetteId](A);
-  const { d: bodiceD, detailLines: bodiceDetailLines, overlay: bodiceFoldOverlay, mesh: bodiceMesh } = buildBodice(A, necklineId, waistY, sleeveId !== 'none');
+  const { d: bodiceD, detailLines: bodiceDetailLines, overlay: bodiceFoldOverlay, mesh: bodiceMesh } = buildBodice(A, necklineId, waistY, sleeveId);
 
   // 0. 마네킹 베이스 — 넥라인/보디스보다 먼저 그려서 항상 맨 뒤에 깔린다 (팔까지 포함)
   const torsoPath = document.createElementNS(svgNS, 'path');
