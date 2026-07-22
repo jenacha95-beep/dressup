@@ -153,11 +153,25 @@
   .chip.text-only { min-width: auto; padding: 8px 12px; }
   .other-input-wrap { margin-top: 6px; }
   /* 소재/오버레이 칩 설명 — PC는 title 호버로도 보이지만, 모바일은 호버가 없어서 선택한
-     칩의 설명을 여기 캡션으로 항상 보여준다 (사용자 요청) */
+     칩의 설명을 제목 바로 아래 눈에 띄는 박스로 항상 보여준다 (사용자 요청). 은은한 캡션
+     텍스트로는 놓치기 쉬워서, 배경/테두리가 있는 박스 + 아이콘으로 명확히 드러나게 한다 */
   .chip-desc {
-    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12.5px;
+    color: var(--text);
+    background: #ffffff88;
+    border: 1px solid var(--outline);
+    border-radius: 8px;
+    padding: 6px 10px;
+    margin: 2px 0 8px;
+  }
+  .chip-desc::before {
+    content: 'ℹ';
+    font-size: 13px;
+    flex-shrink: 0;
     opacity: 0.7;
-    margin-top: 6px;
   }
   .texture-ref {
     margin: 6px 0 4px;
@@ -1600,7 +1614,7 @@ function todayStr() {
 function defaultSketch() {
   return {
     silhouette: 'aline', neckline: 'sweetheart', sleeve: 'none',
-    waist: 'natural', back: 'vback', train: 'sweep',
+    waist: 'natural', back: 'vback', train: 'none',
     skirtMaterial: 'satin', skirtOverlay: 'none',
     bodiceMaterial: 'satin', bodiceOverlay: 'none',
     sleeveMaterial: 'satin', sleeveOverlay: 'none',
@@ -1928,6 +1942,18 @@ function buildChipSection(title, order, currentValue, labelMap, onSelect, thumbF
   heading.textContent = title;
   wrap.appendChild(heading);
 
+  // 소재/오버레이 칩은 설명이 보이면 좋겠다는 요청 — title 속성(PC 호버)은 남겨두되, 모바일은
+  // 호버가 없어서 title만으로는 안 보인다. 그래서 선택된 칩의 설명을 제목 바로 아래 눈에 띄는
+  // 박스로 항상 보여준다 — 칩 목록보다 위(스크롤/줄바꿈과 무관하게 항상 같은 자리)에 둬서
+  // 놓치기 어렵게 하고, 탭해서 다른 칩을 고르면 내용만 바뀐다
+  let descBox = null;
+  if (descMap) {
+    descBox = document.createElement('div');
+    descBox.className = 'chip-desc';
+    descBox.textContent = descMap[currentValue] || '';
+    wrap.appendChild(descBox);
+  }
+
   const row = document.createElement('div');
   row.className = 'chip-row';
   order.forEach((id) => {
@@ -1935,10 +1961,6 @@ function buildChipSection(title, order, currentValue, labelMap, onSelect, thumbF
     chip.type = 'button';
     chip.className = 'chip' + (thumbFn ? '' : ' text-only') + (id === currentValue ? ' selected' : '');
     chip.setAttribute('aria-label', labelMap[id]);
-    // 소재/오버레이 칩은 설명이 보이면 좋겠다는 요청 — title 속성(PC 호버)은 남겨두되,
-    // 모바일은 호버 자체가 없어서 title만으로는 안 보인다. 그래서 탭하면(=선택하면) 그
-    // 칩의 설명이 바로 아래 캡션으로 뜨게 해서, 탭 한 번으로 선택과 설명 확인이 동시에
-    // 되도록 한다 (플랫폼 무관하게 동작)
     if (descMap && descMap[id]) chip.title = descMap[id];
     if (thumbFn) chip.appendChild(thumbFn(id));
     const label = document.createElement('span');
@@ -1949,13 +1971,6 @@ function buildChipSection(title, order, currentValue, labelMap, onSelect, thumbF
     row.appendChild(chip);
   });
   wrap.appendChild(row);
-
-  if (descMap && descMap[currentValue]) {
-    const desc = document.createElement('div');
-    desc.className = 'chip-desc';
-    desc.textContent = descMap[currentValue];
-    wrap.appendChild(desc);
-  }
 
   if (currentValue === 'other') {
     const inputWrap = document.createElement('div');

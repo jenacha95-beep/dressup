@@ -196,7 +196,7 @@ const LABEL = {
   }
 }
 ```
-**기본값**: 새 기록은 `aline` / `sweetheart` / `none` / `natural` / `vback` / `sweep` /
+**기본값**: 새 기록은 `aline` / `sweetheart` / `none`(sleeve) / `natural` / `vback` / `none`(train) /
 스커트·보디스·소매 모두 원단 `satin` + 오버레이 `none`으로 시작한다.
 `textureRef`의 skirt/bodice/sleeve는 각각 `{ note: '', image: null }`로 시작한다.
 아무것도 안 골라도 저장 가능해야 한다.
