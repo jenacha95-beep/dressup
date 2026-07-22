@@ -90,19 +90,23 @@ sleeve[id] = (A) => ({ d: 'M...Z' })
 ```
 ### 3.3 렌더 순서 (z-index)
 ```
-1. 스커트 패스     ← skirtMaterial fill 적용, skirtOverlay가 none이 아니면 그 위에 한 겹 더
-2. 보디스 패스     ← bodiceMaterial fill 적용, bodiceOverlay가 none이 아니면 그 위에 한 겹 더
-3. 소매           ← sleeveMaterial fill 적용, sleeveOverlay가 none이 아니면 그 위에 한 겹 더
+1. 스커트 패스     ← skirtMaterial fill 적용, skirtOverlays에 든 것들을 순서대로 한 겹씩 더
+2. 보디스 패스     ← bodiceMaterial fill 적용, bodiceOverlays에 든 것들을 순서대로 한 겹씩 더
+3. 소매           ← sleeveMaterial fill 적용, sleeveOverlays에 든 것들을 순서대로 한 겹씩 더
 4. 외곽선 스트로크
 ```
 원단은 `<defs>` 안의 `<pattern>`(배경 불투명)으로, 오버레이도 별도 `<pattern>`(배경 투명,
 장식 무늬만)으로 정의한다. 오버레이를 그릴 때는 같은 도형(d)에 원단 fill을 먼저 채운 뒤
 오버레이 fill을 한 번 더 겹쳐 그려서, 무늬 사이로 원단이 비쳐 보이게 한다. 텍스처마다
 별도 도형을 그리지 말 것 — 원단/오버레이 모두 같은 파츠 도형을 재사용한다.
-**스커트/보디스/소매는 각각 독립적으로 원단+오버레이를 고른다** (예: 스커트=타프타+없음,
-보디스=새틴+비즈, 소매=오간자+없음). 같은 파츠(스커트, 보디스)라도 서로 다른 원단을 쓸 수
-있으므로 fill이 이제 자동으로 일치하지 않는다 — 허리 이음매는 좌표가 정확히 겹치는 것만으로
-보장하고, 원단 경계선이 보이는 것은 정상이다(실제 드레스도 파츠마다 원단이 다르면 이음매가 보인다).
+**오버레이는 파츠당 복수 선택이 가능하다** (예: 보디스에 자수 레이스 + 비즈를 같이 선택)
+— 고른 순서대로 같은 도형 위에 한 겹씩 더 쌓아 그린다(사용자 요청). "없음"을 고르면
+그 파츠의 오버레이 선택을 전부 지운다(배타적 초기화).
+**스커트/보디스/소매는 각각 독립적으로 원단+오버레이(복수)를 고른다** (예: 스커트=타프타+
+없음, 보디스=새틴+비즈+진주, 소매=오간자+없음). 같은 파츠(스커트, 보디스)라도 서로 다른
+원단을 쓸 수 있으므로 fill이 이제 자동으로 일치하지 않는다 — 허리 이음매는 좌표가 정확히
+겹치는 것만으로 보장하고, 원단 경계선이 보이는 것은 정상이다(실제 드레스도 파츠마다 원단이
+다르면 이음매가 보인다).
 ### 3.4 `other` 값 렌더링
 모든 분류에 `other` 값이 존재한다. 렌더링 규칙:
 - 해당 분류의 **기본값 도형을 그대로 쓰되 외곽선을 점선(`stroke-dasharray: 4 3`)으로** 바꾼다
@@ -142,13 +146,16 @@ Sketch = {
   waist:          'natural'|'drop'|'empire'|'basque'|'other',
   back:           'vback'|'lowback'|'keyhole'|'buttons'|'illusion'|'other'|'corset'|'plain',
   train:          'none'|'sweep'|'chapel'|'cathedral'|'other',
-  skirtMaterial:  Material, skirtOverlay: Overlay,
-  bodiceMaterial: Material, bodiceOverlay: Overlay,
-  sleeveMaterial: Material, sleeveOverlay: Overlay,
+  skirtMaterial:  Material, skirtOverlays: Overlay[],
+  bodiceMaterial: Material, bodiceOverlays: Overlay[],
+  sleeveMaterial: Material, sleeveOverlays: Overlay[],
   textureRef:     { skirt: TextureRef, bodice: TextureRef, sleeve: TextureRef, back: TextureRef },
   custom:         { [category: string]: string }  // other 선택 시 사용자 입력. 예: { neckline: '아시메트릭' }
 }
 Material = 'mikado'|'satin'|'crepe'|'taffeta'|'chiffon'|'organza'|'tulle'|'illusiontulle'|'other'
+// 오버레이는 복수 선택 가능이라 Sketch에는 배열로 들어간다(사용자 요청). 'none'은 배열
+// 자체에는 절대 들어가지 않는 값이다 — "없음"을 고르면 배열을 통째로 비운다(빈 배열 == 없음).
+// 칩 UI/인코딩에서 'none'을 특별 취급하기 위해서만 이 enum에 포함시킨다
 Overlay  = 'embroiderylace'|'chemicallace'|'beads'|'pearl'|'glitter'|'flower3d'|'applique'|'none'
 TextureRef = {
   note:  string,       // 참고 메모, 자유 텍스트. 예: "이 사진 질감이랑 비슷함"
@@ -193,21 +200,24 @@ const LABEL = {
                   other: '기타' },  // skirtMaterial/bodiceMaterial/sleeveMaterial이 공유
     overlay:    { embroiderylace: '자수 레이스', chemicallace: '캐미컬 레이스', beads: '비즈',
                   pearl: '진주', glitter: '글리터', flower3d: '3D 플라워', applique: '아플리케',
-                  none: '없음' },  // skirtOverlay/bodiceOverlay/sleeveOverlay가 공유
+                  none: '없음' },  // skirtOverlays/bodiceOverlays/sleeveOverlays가 공유
     // ...
   }
 }
 ```
 **기본값**: 새 기록은 `aline` / `sweetheart` / `none`(sleeve) / `natural` / `vback` / `none`(train) /
-스커트·보디스·소매 모두 원단 `satin` + 오버레이 `none`으로 시작한다.
+스커트·보디스·소매 모두 원단 `satin` + 오버레이 빈 배열(`[]`, 없음)로 시작한다.
 `textureRef`의 skirt/bodice/sleeve/back은 각각 `{ note: '', image: null }`로 시작한다.
 아무것도 안 골라도 저장 가능해야 한다.
 
 **과거 데이터 마이그레이션**: 원단/오버레이를 분리하기 전에는 파츠당 texture 값 하나
 (skirtTexture 등, satin/mikado/tulle/lace/organza/beaded/other)만 저장했다. 예전 기록을
 불러올 때 lace→새틴+자수 레이스, beaded→새틴+비즈로, 나머지는 같은 이름의 원단+오버레이
-없음으로 매핑한다 — 렌더링 함수 자체는 계속 존재해야 크래시가 안 난다는 게 이 프로젝트에서
-겪은 교훈이라, enum 값을 지울 때는 항상 이 패턴(마이그레이션 또는 함수 보존)을 따른다.
+없음으로 매핑한다. 그 뒤(오버레이가 하나만 고를 수 있던 시절) skirtOverlay(문자열 하나)로
+저장된 기록은, 다시 skirtOverlays(배열)로 한 번 더 옮긴다 — 'none'/빈 값은 빈 배열로,
+그 외 값은 원소 하나짜리 배열로. 렌더링 함수 자체는 계속 존재해야 크래시가 안 난다는 게
+이 프로젝트에서 겪은 교훈이라, enum 값을 지울 때는 항상 이 패턴(마이그레이션 또는 함수
+보존)을 따른다.
 ---
 ## 5. 공유 (요구사항 3)
 세 가지 방식을 모두 구현한다. 우선순위는 아래 순서 그대로다.
@@ -240,11 +250,15 @@ const LABEL = {
 - `textureRef`(참고 메모·이미지)는 항상 제외한다 — 이미지 데이터 때문에 URL이 감당 못 할 만큼 커진다
 #### 스케치 코드 규격
 ```
-형식: [버전1자] + [12개 분류 각 1자]
+형식: [버전1자] + [단일 선택 분류 각 1자] + [오버레이 분류 각 2자(비트마스크)]
 알파벳: '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz' (62진)
 분류 순서: silhouette, neckline, sleeve, waist, back, train,
-          skirtMaterial, skirtOverlay, bodiceMaterial, bodiceOverlay, sleeveMaterial, sleeveOverlay
-각 자리 = 해당 enum 배열의 인덱스를 알파벳으로 변환
+          skirtMaterial, skirtOverlays(2자), bodiceMaterial, bodiceOverlays(2자),
+          sleeveMaterial, sleeveOverlays(2자)
+단일 선택 분류: 해당 enum 배열의 인덱스를 알파벳 한 글자로 변환
+오버레이(복수 선택) 분류: 고른 항목들을 enum 배열 인덱스 = 비트 위치로 삼아 비트마스크를
+만들고, 62진 두 글자(문자당 0~61, 총 0~3843)로 표현 — 오버레이는 최대 7개(2^7=128)라 두
+자리면 충분하다. 전체 코드 길이 = 1 + (단일 선택 분류 수) + (오버레이 분류 수 × 2)
 ```
 - 단일 드레스 공유: `https://<host>/#d=10012032`
 - 여러 벌 공유: 배열을 압축 JSON으로 만들어 base64url 인코딩 → `#s=<base64>`
@@ -267,7 +281,8 @@ const LABEL = {
 - 원단/오버레이는 한 단어 라벨 대신 **재질감이 드러나는 서술형 묘사**(`MATERIAL_PROMPT_DESC`,
   `OVERLAY_PROMPT_DESC`)로 풀어 쓴다 — 예: taffeta → "crisp taffeta with a rustling texture
   that holds its shape", beads → "a hand-beaded embellishment overlay with shimmering
-  crystal details". 오버레이가 `none`이 아니면 "in {원단} with {오버레이}" 형태로 합쳐 쓴다
+  crystal details". 오버레이를 복수로 골랐으면 "with {오버레이1} and {오버레이2}"처럼
+  and로 이어 붙이고, 하나도 없으면(빈 배열) 오버레이 구절 자체를 뺀다
 - "기타" 항목(넥라인 등)이나 "기타" 원단은 직접 입력한 텍스트가 있으면 그대로 쓴다
 - 참고 메모(`textureRef.note`)가 있으면 해당 파츠 설명 뒤에 "matching this
   reference: ..."로 덧붙인다 — 스커트/보디스/소매의 원단 설명뿐 아니라, 뒷모습(`textureRef.back`)도
