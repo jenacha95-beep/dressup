@@ -407,12 +407,13 @@ const LABEL = {
       bateau: '보트넥', illusion: '일자 일루전넥', straight: '스트레이트',
       jewel: '주얼넥', scoop: '스쿱넥', other: '기타',
       queenanne: '퀸앤넥', surplice: '서플리스넥', illusionheart: '하트 일루전넥',
-      sweetheartdeep: '딥 스위트하트', bardot: '바르도넥',
+      sweetheartdeep: '딥 스위트하트',
     },
     sleeve: {
       none: '민소매', cap: '캡소매', short: '반팔', long: '긴소매',
       puff: '퍼프소매', other: '기타', offshoulder: '오프숄더 밴드(리본)',
       offshoulderplain: '오프숄더 밴드(민무늬)', coldshoulder: '콜드숄더 소매',
+      offshoulderfold: '오프숄더 밴드(폴드칼라)',
     },
     // 원단(베이스)과 오버레이(장식)를 분리 — 웨딩드레스는 기본 원단 위에 레이스/비즈 등
     // 오버레이가 따로 얹히는 경우가 많아서 소재 선택을 두 축으로 나눴다 (사용자 요청)
@@ -455,7 +456,6 @@ const LABEL = {
       surplice: 'surplice (wrap) neckline',
       illusionheart: 'illusion neckline with a sheer mesh yoke over a sweetheart lining',
       sweetheartdeep: 'deep-plunge sweetheart neckline with a low, narrow center dip revealing cleavage',
-      bardot: 'Bardot neckline — a wide, gently curved scoop neckline with no straps at all, sitting off the shoulders and leaving both shoulders completely bare',
       other: 'custom neckline',
     },
     sleeve: {
@@ -464,7 +464,8 @@ const LABEL = {
       puff: 'puff sleeves', other: 'custom sleeves',
       offshoulder: 'off-the-shoulder draped sleeve band with a gathered bow/knot at center front',
       offshoulderplain: 'off-the-shoulder draped sleeve band with a smooth folded finish and no bow, knot, or gathering at center front',
-      coldshoulder: 'cold-shoulder long sleeves — fitted sleeves with a round cutout exposing bare skin just below the shoulder, the sleeve fabric continues down the arm below the cutout',
+      offshoulderfold: 'off-the-shoulder band with a wide turned-down fold like a portrait/sailor collar, meeting in a V at center front, often with a contrast trim edge',
+      coldshoulder: 'small gathered/ruched puff clusters sitting directly on top of each shoulder only, with the rest of the arm (upper arm and forearm) left completely bare — not a long sleeve',
     },
     material: {
       mikado: 'mikado silk', satin: 'satin', crepe: 'crepe', taffeta: 'taffeta',
@@ -504,14 +505,15 @@ const SILHOUETTE_CHIP_ORDER = ['aline', 'ballgown', 'princess', 'empire', 'sheat
 // offshoulder/keyhole/highneck/twisthalter는 사용자 요청으로 기능 자체를 제거했다(탈부착소매와
 // 같은 이유 — 실사용 데이터가 없는 개발 초기라 인코딩 배열에서도 완전히 뺐다). 칩 표시 순서는
 // NECKLINE_CHIP_ORDER가 따로 담당한다
-const NECKLINE_ORDER = ['sweetheart', 'v', 'square', 'halter', 'bateau', 'illusion', 'straight', 'jewel', 'scoop', 'other', 'queenanne', 'surplice', 'illusionheart', 'sweetheartdeep', 'bardot'];
+const NECKLINE_ORDER = ['sweetheart', 'v', 'square', 'halter', 'bateau', 'illusion', 'straight', 'jewel', 'scoop', 'other', 'queenanne', 'surplice', 'illusionheart', 'sweetheartdeep'];
 // 사용자가 정리한 순서대로 직접 나열 (기타 제외) — 서플리스는 V넥 바로 다음, 딥 스위트하트는
-// 스위트하트 바로 다음, 바르도넥은 참고 이미지 분류를 따라 스퀘어넥 바로 다음에 위치
-const NECKLINE_CHIP_ORDER = ['sweetheart', 'sweetheartdeep', 'illusionheart', 'v', 'surplice', 'square', 'bardot', 'straight', 'illusion', 'bateau', 'jewel', 'scoop', 'halter', 'queenanne'];
+// 스위트하트 바로 다음에 위치. bardot(바르도넥)은 참고 이미지를 다시 보니 넥라인이 아니라
+// 오프숄더 밴드 소매 계열이라 넥라인에서는 뺐다 (사용자 확인)
+const NECKLINE_CHIP_ORDER = ['sweetheart', 'sweetheartdeep', 'illusionheart', 'v', 'surplice', 'square', 'straight', 'illusion', 'bateau', 'jewel', 'scoop', 'halter', 'queenanne'];
 // detachable(탈부착소매)은 기능 자체를 제거했다 (사용자 요청). offshoulder(오프숄더 밴드,
-// 리본 버전)/offshoulderplain(매듭 없는 버전)/coldshoulder(콜드숄더)는 참고 이미지 기반으로
-// 새로 추가한 것 — 재배열 금지 규칙 때문에 other 뒤에 이어 붙인다
-const SLEEVE_ORDER = ['none', 'cap', 'short', 'long', 'puff', 'other', 'offshoulder', 'offshoulderplain', 'coldshoulder'];
+// 리본 버전)/offshoulderplain(매듭 없는 버전)/offshoulderfold(폴드칼라 버전)/coldshoulder는
+// 참고 이미지 기반으로 새로 추가한 것 — 재배열 금지 규칙 때문에 other 뒤에 이어 붙인다
+const SLEEVE_ORDER = ['none', 'cap', 'short', 'long', 'puff', 'other', 'offshoulder', 'offshoulderplain', 'coldshoulder', 'offshoulderfold'];
 const SLEEVE_CHIP_ORDER = SLEEVE_ORDER.filter((id) => id !== 'other');
 // 원단(소재)과 오버레이(장식)를 두 축으로 나눈 텍스처 모델 (사용자 요청). 파츠(보디스/
 // 스커트/소매)마다 실제로 쓰이는 소재 목록은 다르지만, 오버레이 목록은 세 파츠가 동일하다.
@@ -822,18 +824,6 @@ neckline.square = (A) => {
   };
 };
 
-// 바르도넥 — 스트랩 없이 어깨가 완전히 드러나고, 가슴선을 넓고 완만하게 U자로 가로지르는
-// 형태 (참고 이미지 기준). 처음엔 8px짜리 살짝 들린 셸프 라인으로 만들었더니 칩 미리보기
-// 처럼 작게 보일 때 거의 일자와 구분이 안 갔다 — 눈에 띄게 다르도록 단순하고 확실한 넓은
-// U자 곡선으로 다시 그렸다
-neckline.bardot = (A) => {
-  const dipY = A.bustY + 18;
-  return {
-    strapless: true,
-    d: `M ${A.bustL} ${A.bustY} Q ${A.centerX} ${dipY} ${A.bustR} ${A.bustY}`,
-  };
-};
-
 // 가슴선에서 시작해(어깨는 드러남) 목 앞에서 좁아져 둥근 앞고리로 마감된다. 목 뒤로
 // 넘어가 접히는 부분은 이 앞고리와 겹치는 별도의 둥근 조각(overlay)으로 정면에 그대로
 // 노출해 표현한다 — 실제로는 안 보이는 부분이지만, 실루엣을 명확히 남기기 위해 정면에
@@ -946,6 +936,16 @@ neckline.twisthalter = (A) => {
 
 // 새 도형을 그리지 않고 기본값(sweetheart)을 재사용한다 (SPEC.md §3.4, §4 기본값)
 neckline.other = neckline.sweetheart;
+
+// bardot(바르도넥)은 카테고리를 잘못 짚어서(넥라인이 아니라 소매 계열) 잠깐 넣었다가
+// 뺐다 — 그 짧은 사이에 이미 골라서 저장한 기록이 있을 수 있어 함수는 남겨둔다
+neckline.bardot = (A) => {
+  const dipY = A.bustY + 18;
+  return {
+    strapless: true,
+    d: `M ${A.bustL} ${A.bustY} Q ${A.centerX} ${dipY} ${A.bustR} ${A.bustY}`,
+  };
+};
 
 // offshoulder/keyhole/highneck은 칩 목록/인코딩 배열에서는 뺐지만(사용자 요청), 이 세 값을
 // 이미 저장한 기존 기록이 있으면 렌더링 시 neckline[id]가 함수를 못 찾아 앱 전체가
@@ -1142,26 +1142,29 @@ sleeve.other = sleeve.none;
 // 기존 기록 호환을 위해 긴소매 모양으로라도 안전하게 렌더링되게 남겨둔다
 sleeve.detachable = sleeve.long;
 
-// 콜드숄더 소매 — 어깨점에서 짧게 이어지다 어깨 바로 아래에서 살이 드러나는 컷아웃(구멍)이
-// 뚫리고, 그 아래부터 다시 긴소매가 이어지는 형태 (참고 이미지 기준)
+// 콜드숄더 소매 — 처음엔 "어깨 아래 컷아웃 + 팔뚝까지 이어지는 긴소매"로 만들었는데,
+// 참고 사진을 다시 보니 반대였다: 어깨 위에만 개더(주름)진 퍼프가 뭉쳐 있고 그 아래
+// 위팔·팔뚝은 전부 맨살로 남는 형태. 퍼프소매(sleeve.puff)처럼 하나의 큰 풍선이 아니라,
+// 작은 퍼프 3개가 어깨선을 따라 겹쳐서 개더진 질감을 낸다 (사용자 확인)
 sleeve.coldshoulder = (A) => {
-  // 처음엔 cap 아랫변을 곡선 3개로 둥글렸더니 칩 미리보기처럼 작게 보일 때 꼬인 리본
-  // 매듭처럼 보였다 — 작은 사다리꼴로 단순화하고, 컷아웃(빈 틈) 자체를 크게 키워서
-  // 어느 크기에서나 "어깨에 구멍이 뚫렸다"는 게 분명히 보이게 했다
-  const gapTopY = A.shoulderY + 6;
-  const gapBottomY = A.shoulderY + 50;
-  const capHalf = 6;
-  const cap = (side) => {
-    const shoulderX = side === -1 ? A.shoulderL : A.shoulderR;
-    return `M ${shoulderX - side * capHalf * 0.4} ${A.shoulderY}
-        L ${shoulderX + side * capHalf * 0.6} ${A.shoulderY}
-        L ${shoulderX + side * 4} ${gapTopY}
-        L ${shoulderX - side * 4} ${gapTopY} Z`;
+  // 겹치는 타원 3개를 각자 닫힌 subpath로 그렸더니, 채우기는 하나로 합쳐져도 테두리
+  // 선(stroke)은 타원마다 따로 그려져서 도넛/링 여러 개가 겹친 것처럼 보였다 — 하나의
+  // 연속된 경로(개더 파도 모양)로 다시 그려서 외곽선이 한 번만 매끄럽게 그려지게 했다
+  const puffCluster = (shoulderX) => {
+    const width = 36;
+    const bumpW = width / 3;
+    const x0 = shoulderX - width / 2;
+    const topY = A.shoulderY - 6;
+    const midY = A.shoulderY + 6;
+    const botY = A.shoulderY + 18;
+    return `M ${x0} ${midY}
+        Q ${x0 + bumpW * 0.5} ${topY} ${x0 + bumpW} ${midY}
+        Q ${x0 + bumpW * 1.5} ${topY} ${x0 + bumpW * 2} ${midY}
+        Q ${x0 + bumpW * 2.5} ${topY} ${x0 + bumpW * 3} ${midY}
+        Q ${x0 + bumpW * 2.5} ${botY} ${x0 + bumpW * 1.5} ${botY + 4}
+        Q ${x0 + bumpW * 0.5} ${botY} ${x0} ${midY} Z`;
   };
-  return {
-    d: `${cap(-1)} ${sleevePetal(A, -1, 4, 140, 13, 7, gapBottomY)}
-        ${cap(1)} ${sleevePetal(A, 1, 4, 140, 13, 7, gapBottomY)}`,
-  };
+  return { d: `${puffCluster(A.shoulderL)} ${puffCluster(A.shoulderR)}` };
 };
 
 // 오프숄더 밴드 소매 — 팔 위를 가로지르는 넓은 밴드가 어깨 바깥까지 뻗는 모양(참고 이미지
@@ -1205,6 +1208,22 @@ sleeve.offshoulder = (A) => {
 
 // 매듭 없는 버전 — 참고 이미지 중 밴드만 두르고 중앙에 별다른 장식이 없는 스타일 (사용자 요청)
 sleeve.offshoulderplain = (A) => ({ d: offshoulderBand(A).d });
+
+// 폴드칼라 버전 — 원래 "바르도넥"으로 잘못 분류했던 참고 이미지(세일러 칼라처럼 넓은 밴드가
+// 뒤집혀 접힌 채 가운데서 V자로 만나는 형태, 배색 트림 포함). 매듭 대신 밴드 바로 안쪽에
+// 접힘선을 한 겹 더 그려서 "칼라가 뒤집혀 접혀 있다"는 걸 표현한다 (사용자 확인)
+sleeve.offshoulderfold = (A) => {
+  const { d: band, dipTopY } = offshoulderBand(A);
+  const topY = A.bustY - 28;
+  const outReach = 26;
+  const outL = A.shoulderL - outReach;
+  const outR = A.shoulderR + outReach;
+  const foldLine = `M ${outL + 5} ${topY + 15}
+      Q ${A.shoulderL - 4} ${topY + 10} ${A.centerX - 13} ${dipTopY + 9}
+      Q ${A.centerX} ${dipTopY + 16} ${A.centerX + 13} ${dipTopY + 9}
+      Q ${A.shoulderR + 4} ${topY + 10} ${outR - 5} ${topY + 15}`;
+  return { d: band, detailLines: [foldLine] };
+};
 
 // 텍스처: <pattern> 타일로 정의해 fill="url(#...)"로 참조한다 (SPEC.md §3.3). 미묘하게 —
 // 특히 레이스는 튤(균일한 그물망)과 달리 불규칙하게 흩뿌린 작은 점으로 그려 net 무늬로 안 보이게 한다
@@ -1555,10 +1574,17 @@ function buildFullDressSvg(silhouetteId, necklineId, sleeveId, textures, waistId
   }
 
   // 3. 소매
-  const { d: sleeveD } = sleeve[sleeveId](A);
+  const { d: sleeveD, detailLines: sleeveDetailLines } = sleeve[sleeveId](A);
   if (sleeveD) {
     appendMaterialOverlayPath(svgNS, defs, svg, sleeveD, textures.sleeveMaterial, textures.sleeveOverlay, sleeveId === 'other' ? 'other' : '');
   }
+  // 오프숄더 폴드칼라처럼, 채운 도형만으로는 안 보이는 접힘선 등의 순수 장식용 강조선
+  (sleeveDetailLines || []).forEach((d) => {
+    const p = document.createElementNS(svgNS, 'path');
+    p.setAttribute('d', d);
+    p.setAttribute('class', 'fold-line');
+    svg.appendChild(p);
+  });
 
   return svg;
 }
