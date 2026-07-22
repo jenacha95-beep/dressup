@@ -431,7 +431,7 @@ const LABEL = {
     },
     back: {
       vback: '브이백', lowback: '로우백', keyhole: '키홀백', buttons: '단추 장식',
-      illusion: '일루전백', other: '기타',
+      illusion: '일루전백', other: '기타', corset: '코르셋 백',
     },
     train: {
       none: '없음', sweep: '스윕 트레인', chapel: '채플 트레인', cathedral: '캐시드럴 트레인', other: '기타',
@@ -478,6 +478,7 @@ const LABEL = {
     back: {
       vback: 'V-back', lowback: 'low back', keyhole: 'keyhole back',
       buttons: 'button-detailed back', illusion: 'illusion back', other: 'custom back',
+      corset: 'corset-style lace-up back with crisscross ribbon lacing down the center back',
     },
     train: {
       none: 'no train', sweep: 'sweep train', chapel: 'chapel train',
@@ -538,7 +539,8 @@ const OVERLAY_DESC = {
   none: '장식 없음',
 };
 const WAIST_ORDER = ['natural', 'drop', 'empire', 'basque', 'other'];
-const BACK_ORDER = ['vback', 'lowback', 'keyhole', 'buttons', 'illusion', 'other'];
+// corset(코르셋 백)은 참고 이미지 기반으로 새로 추가한 것 — 재배열 금지 규칙 때문에 other 뒤에 이어 붙인다
+const BACK_ORDER = ['vback', 'lowback', 'keyhole', 'buttons', 'illusion', 'other', 'corset'];
 const TRAIN_ORDER = ['none', 'sweep', 'chapel', 'cathedral', 'other'];
 const WAIST_CHIP_ORDER = WAIST_ORDER.filter((id) => id !== 'other');
 const BACK_CHIP_ORDER = BACK_ORDER.filter((id) => id !== 'other');
@@ -1320,6 +1322,28 @@ const BACK_SHAPE = {
   }),
 };
 BACK_SHAPE.other = BACK_SHAPE.vback;
+
+// 코르셋 백 — 참고 사진 기준. 목선은 얕게(끈이 주인공이라 깊게 파지 않는다) 두고, 그 아래
+// 허리까지 X자로 교차하는 끈을 여러 단 쌓아 코르셋 레이스업 특유의 사다리꼴 교차를 표현한다.
+// 교차 기법 자체는 퀸앤넥/트위스트홀터와 같다 — 좌우 끝점을 반대쪽으로 바꿔치기하면 교차선이 된다
+BACK_SHAPE.corset = (A) => {
+  const dipY = A.shoulderY + 15;
+  const topY = dipY + 10;
+  const bottomY = A.waistY - 10;
+  const laceHalf = 13;
+  const rungs = 6;
+  const detailLines = [];
+  for (let i = 0; i < rungs; i++) {
+    const y0 = topY + (i / rungs) * (bottomY - topY);
+    const y1 = topY + ((i + 1) / rungs) * (bottomY - topY);
+    detailLines.push(`M ${A.centerX - laceHalf} ${y0} L ${A.centerX + laceHalf} ${y1}`);
+    detailLines.push(`M ${A.centerX + laceHalf} ${y0} L ${A.centerX - laceHalf} ${y1}`);
+  }
+  return {
+    d: `M ${A.shoulderL} ${A.shoulderY} Q ${A.centerX} ${dipY} ${A.shoulderR} ${A.shoulderY}`,
+    detailLines,
+  };
+};
 
 // 파츠 하나의 도형(d)에 원단(소재) 패턴을 채우고, 오버레이(장식)를 골랐으면(=='none'이 아니면)
 // 같은 도형 위에 오버레이 패턴을 한 겹 더 덮어 그린다 — 오버레이 패턴은 배경이 투명해서

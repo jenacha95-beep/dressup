@@ -140,7 +140,7 @@ Sketch = {
   neckline:       'sweetheart'|'v'|'square'|'halter'|'bateau'|'illusion'|'straight'|'jewel'|'scoop'|'other'|'queenanne'|'surplice'|'illusionheart'|'sweetheartdeep',
   sleeve:         'none'|'cap'|'short'|'long'|'puff'|'other'|'offshoulder',
   waist:          'natural'|'drop'|'empire'|'basque'|'other',
-  back:           'vback'|'lowback'|'keyhole'|'buttons'|'illusion'|'other',
+  back:           'vback'|'lowback'|'keyhole'|'buttons'|'illusion'|'other'|'corset',
   train:          'none'|'sweep'|'chapel'|'cathedral'|'other',
   skirtMaterial:  Material, skirtOverlay: Overlay,
   bodiceMaterial: Material, bodiceOverlay: Overlay,
