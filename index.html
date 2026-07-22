@@ -374,6 +374,7 @@ const LABEL = {
       bateau: '보트넥', illusion: '일자 일루전넥', straight: '스트레이트',
       jewel: '주얼넥', scoop: '스쿱넥', other: '기타',
       queenanne: '퀸앤넥', surplice: '서플리스넥', illusionheart: '하트 일루전넥',
+      sweetheartdeep: '딥 스위트하트',
     },
     sleeve: {
       none: '민소매', cap: '캡소매', short: '반팔', long: '긴소매',
@@ -411,6 +412,7 @@ const LABEL = {
       queenanne: 'Queen Anne neckline with crossed straps meeting in an X at the collarbone',
       surplice: 'surplice (wrap) neckline',
       illusionheart: 'illusion neckline with a sheer mesh yoke over a sweetheart lining',
+      sweetheartdeep: 'deep-plunge sweetheart neckline with a low, narrow center dip revealing cleavage',
       other: 'custom neckline',
     },
     sleeve: {
@@ -447,9 +449,10 @@ const SILHOUETTE_CHIP_ORDER = ['aline', 'ballgown', 'princess', 'empire', 'sheat
 // offshoulder/keyhole/highneck/twisthalter는 사용자 요청으로 기능 자체를 제거했다(탈부착소매와
 // 같은 이유 — 실사용 데이터가 없는 개발 초기라 인코딩 배열에서도 완전히 뺐다). 칩 표시 순서는
 // NECKLINE_CHIP_ORDER가 따로 담당한다
-const NECKLINE_ORDER = ['sweetheart', 'v', 'square', 'halter', 'bateau', 'illusion', 'straight', 'jewel', 'scoop', 'other', 'queenanne', 'surplice', 'illusionheart'];
-// 사용자가 정리한 순서대로 직접 나열 (기타 제외) — 서플리스는 V넥 바로 다음에 위치
-const NECKLINE_CHIP_ORDER = ['sweetheart', 'illusionheart', 'v', 'surplice', 'square', 'straight', 'illusion', 'bateau', 'jewel', 'scoop', 'halter', 'queenanne'];
+const NECKLINE_ORDER = ['sweetheart', 'v', 'square', 'halter', 'bateau', 'illusion', 'straight', 'jewel', 'scoop', 'other', 'queenanne', 'surplice', 'illusionheart', 'sweetheartdeep'];
+// 사용자가 정리한 순서대로 직접 나열 (기타 제외) — 서플리스는 V넥 바로 다음, 딥 스위트하트는
+// 스위트하트 바로 다음에 위치
+const NECKLINE_CHIP_ORDER = ['sweetheart', 'sweetheartdeep', 'illusionheart', 'v', 'surplice', 'square', 'straight', 'illusion', 'bateau', 'jewel', 'scoop', 'halter', 'queenanne'];
 // detachable(탈부착소매)은 기능 자체를 제거했다 (사용자 요청). offshoulder(오프숄더 밴드)는
 // 참고 이미지 기반으로 새로 추가한 것 — 재배열 금지 규칙 때문에 other 뒤에 이어 붙인다
 const SLEEVE_ORDER = ['none', 'cap', 'short', 'long', 'puff', 'other', 'offshoulder'];
@@ -681,6 +684,24 @@ neckline.sweetheart = (A) => {
         Q ${A.bustL - 3} ${peakY - 6} ${peakL} ${peakY}
         C ${peakL + 20} ${peakY + 8} ${A.centerX - 16} ${dipY - 12} ${A.centerX} ${dipY}
         C ${A.centerX + 16} ${dipY - 12} ${peakR - 20} ${peakY + 8} ${peakR} ${peakY}
+        Q ${A.bustR + 3} ${peakY - 6} ${A.bustR} ${A.bustY}`,
+  };
+};
+
+// 스위트하트와 봉우리 위치는 같지만, 중앙 다이가 훨씬 아래로 더 좁고 깊게 파여 가슴골이
+// 드러나는 버전 (사용자 요청 — "좀 더 가슴골이 깊게 파인 하트넥")
+neckline.sweetheartdeep = (A) => {
+  const peakY = A.bustY - 20;
+  const dipY = A.bustY + 45;
+  const peakHalf = 12;
+  const peakL = A.bustL + peakHalf;
+  const peakR = A.bustR - peakHalf;
+  return {
+    strapless: true,
+    d: `M ${A.bustL} ${A.bustY}
+        Q ${A.bustL - 3} ${peakY - 6} ${peakL} ${peakY}
+        C ${peakL + 14} ${peakY + 10} ${A.centerX - 10} ${dipY - 24} ${A.centerX} ${dipY}
+        C ${A.centerX + 10} ${dipY - 24} ${peakR - 14} ${peakY + 10} ${peakR} ${peakY}
         Q ${A.bustR + 3} ${peakY - 6} ${A.bustR} ${A.bustY}`,
   };
 };
