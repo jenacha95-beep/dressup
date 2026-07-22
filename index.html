@@ -372,7 +372,7 @@ const LABEL = {
     neckline: {
       sweetheart: '스위트하트', v: 'V넥', square: '스퀘어넥', halter: '홀터넥',
       bateau: '보트넥', illusion: '일자 일루전넥', straight: '스트레이트',
-      jewel: '주얼넥', scoop: '스쿱넥', twisthalter: '트위스트홀터넥', other: '기타',
+      jewel: '주얼넥', scoop: '스쿱넥', other: '기타',
       queenanne: '퀸앤넥', surplice: '서플리스넥', illusionheart: '하트 일루전넥',
     },
     sleeve: {
@@ -408,7 +408,7 @@ const LABEL = {
       bateau: 'bateau (boat) neckline',
       illusion: 'illusion neckline with a sheer mesh yoke over a straight-across lining',
       straight: 'straight-across neckline', jewel: 'jewel neckline', scoop: 'scoop neckline',
-      twisthalter: 'twist halter neckline', queenanne: 'Queen Anne neckline',
+      queenanne: 'Queen Anne neckline with crossed straps meeting in an X at the collarbone',
       surplice: 'surplice (wrap) neckline',
       illusionheart: 'illusion neckline with a sheer mesh yoke over a sweetheart lining',
       other: 'custom neckline',
@@ -444,12 +444,12 @@ const LABEL = {
 const SILHOUETTE_ORDER = ['aline', 'ballgown', 'mermaid', 'trumpet', 'sheath', 'empire', 'other', 'princess'];
 // 칩 표시 순서는 인코딩 순서와 무관하게 사용자가 원하는 순서로 직접 나열 (기타 제외)
 const SILHOUETTE_CHIP_ORDER = ['aline', 'ballgown', 'princess', 'empire', 'sheath', 'mermaid', 'trumpet'];
-// offshoulder/keyhole/highneck은 사용자 요청으로 기능 자체를 제거했다(탈부착소매와 같은
-// 이유 — 실사용 데이터가 없는 개발 초기라 인코딩 배열에서도 완전히 뺐다). 칩 표시 순서는
+// offshoulder/keyhole/highneck/twisthalter는 사용자 요청으로 기능 자체를 제거했다(탈부착소매와
+// 같은 이유 — 실사용 데이터가 없는 개발 초기라 인코딩 배열에서도 완전히 뺐다). 칩 표시 순서는
 // NECKLINE_CHIP_ORDER가 따로 담당한다
-const NECKLINE_ORDER = ['sweetheart', 'v', 'square', 'halter', 'bateau', 'illusion', 'straight', 'jewel', 'scoop', 'twisthalter', 'other', 'queenanne', 'surplice', 'illusionheart'];
-// 사용자가 정리한 순서대로 직접 나열 (기타 제외)
-const NECKLINE_CHIP_ORDER = ['sweetheart', 'illusionheart', 'v', 'square', 'straight', 'illusion', 'bateau', 'jewel', 'scoop', 'halter', 'twisthalter', 'queenanne', 'surplice'];
+const NECKLINE_ORDER = ['sweetheart', 'v', 'square', 'halter', 'bateau', 'illusion', 'straight', 'jewel', 'scoop', 'other', 'queenanne', 'surplice', 'illusionheart'];
+// 사용자가 정리한 순서대로 직접 나열 (기타 제외) — 서플리스는 V넥 바로 다음에 위치
+const NECKLINE_CHIP_ORDER = ['sweetheart', 'illusionheart', 'v', 'surplice', 'square', 'straight', 'illusion', 'bateau', 'jewel', 'scoop', 'halter', 'queenanne'];
 // detachable(탈부착소매)은 기능 자체를 제거했다 (사용자 요청). offshoulder(오프숄더 밴드)는
 // 참고 이미지 기반으로 새로 추가한 것 — 재배열 금지 규칙 때문에 other 뒤에 이어 붙인다
 const SLEEVE_ORDER = ['none', 'cap', 'short', 'long', 'puff', 'other', 'offshoulder'];
@@ -785,10 +785,8 @@ neckline.scoop = (A) => {
   };
 };
 
-// 가슴선 양끝에서 대각선으로 올라가 서로 교차하는 두꺼운 스트랩을 만든다 — 왼쪽 가슴은
-// 교차 뒤 오른쪽으로, 오른쪽 가슴은 교차 뒤 왼쪽으로 이어진다. 목 뒤로 넘어가 접히는
-// 부분은 이 교차 지점과 겹치는 별도의 사각 조각(overlay)으로 정면에 그대로 노출해
-// 표현한다 — 실제로는 안 보이는 부분이지만 실루엣을 명확히 남기기 위해 정면에 펼쳐 보임
+// 트위스트홀터넥(크로스 홀터넥)은 사용자 요청으로 칩 목록/인코딩 배열에서 제거했다. 기존
+// 저장 기록 호환을 위해 함수 자체는 남겨둔다 (offshoulder/keyhole/highneck과 같은 이유)
 neckline.twisthalter = (A) => {
   const neckHalf = 9;
   const frontTopY = A.neckY + 15;
@@ -876,21 +874,21 @@ neckline.highneck = (A) => {
   };
 };
 
-// 어깨점에서 목 가까이까지 높게 올라간 뒤(하이넥에 가까운 컬러 라인), 다시 정중앙에서
-// 완만하게 파여 내려오는 넥라인 (퀸앤). 옆쪽은 비침 소재를 암시하는 높은 라인, 중앙은
-// 얕은 하트형 다이로 표현한다
+// 참고 사진 기준 퀸앤넥: 양쪽 어깨점에서 시작한 스트랩이 쇄골 높이에서 서로 반대편으로
+// 넘어가며 교차해(X자) 목 아래 한 점으로 모인다. 좌우 스트랩의 끝점을 반대쪽으로 바꿔치기해
+// 교차를 실제로 만드는 것은 트위스트홀터넥과 같은 기법 — 여기서는 어깨에 붙는 넥라인이라
+// 교차 위치가 더 높고(쇄골) 모이는 지점은 목 아래로 더 낮다
 neckline.queenanne = (A) => {
-  const wingHalf = 20;
-  const wingY = A.shoulderY - 25;
-  const peakY = A.bustY - 35;
-  const dipY = A.bustY - 5;
+  const pinchHalf = 18;
+  const crossY = A.shoulderY + 25;
+  const pointY = A.bustY - 15;
   return {
     strapless: false,
     d: `M ${A.shoulderL} ${A.shoulderY}
-        Q ${A.shoulderL - 2} ${A.shoulderY - 12} ${A.centerX - wingHalf} ${wingY}
-        C ${A.centerX - wingHalf} ${peakY} ${A.centerX - 26} ${peakY} ${A.centerX} ${dipY}
-        C ${A.centerX + 26} ${peakY} ${A.centerX + wingHalf} ${peakY} ${A.centerX + wingHalf} ${wingY}
-        Q ${A.shoulderR + 2} ${A.shoulderY - 12} ${A.shoulderR} ${A.shoulderY}`,
+        L ${A.centerX + pinchHalf} ${crossY}
+        L ${A.centerX} ${pointY}
+        L ${A.centerX - pinchHalf} ${crossY}
+        L ${A.shoulderR} ${A.shoulderY}`,
   };
 };
 

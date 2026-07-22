@@ -135,7 +135,7 @@ Fitting = {
 }
 Sketch = {
   silhouette:     'aline'|'ballgown'|'mermaid'|'trumpet'|'sheath'|'empire'|'other'|'princess',
-  neckline:       'sweetheart'|'v'|'square'|'halter'|'bateau'|'illusion'|'straight'|'jewel'|'scoop'|'twisthalter'|'other'|'queenanne'|'surplice'|'illusionheart',
+  neckline:       'sweetheart'|'v'|'square'|'halter'|'bateau'|'illusion'|'straight'|'jewel'|'scoop'|'other'|'queenanne'|'surplice'|'illusionheart',
   sleeve:         'none'|'cap'|'short'|'long'|'puff'|'other'|'offshoulder',
   waist:          'natural'|'drop'|'empire'|'basque'|'other',
   back:           'vback'|'lowback'|'keyhole'|'buttons'|'illusion'|'other',
@@ -172,7 +172,7 @@ const LABEL = {
     silhouette: { aline: 'A라인', ballgown: '벨라인', mermaid: '머메이드',
                   trumpet: '트럼펫', sheath: '시스', empire: '엠파이어', other: '기타',
                   princess: '프린세스' },  // id는 ballgown 그대로 두고 라벨만 벨라인으로 변경
-    neckline:   { sweetheart: '스위트하트', v: 'V넥', square: '스퀘어넥', jewel: '주얼넥', scoop: '스쿱넥', twisthalter: '트위스트홀터넥', ... },
+    neckline:   { sweetheart: '스위트하트', v: 'V넥', square: '스퀘어넥', jewel: '주얼넥', scoop: '스쿱넥', queenanne: '퀸앤넥', ... },
     texture:    { satin: '새틴', mikado: '미카도', tulle: '튤', lace: '레이스',
                   organza: '오간자', beaded: '비즈', other: '기타' },  // skirtTexture/bodiceTexture/sleeveTexture가 공유
     // ...
