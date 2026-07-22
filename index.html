@@ -167,6 +167,18 @@
     border-radius: 6px;
     border: 1px solid var(--outline);
   }
+  /* 기록 화면의 칩 구간을 3그룹(형태/원단/디테일)으로 나눠 시각적으로 분리한다 (사용자 요청) */
+  .record-group {
+    padding-top: 18px;
+    margin-top: 18px;
+    border-top: 1px solid var(--outline);
+  }
+  .record-group:first-child { padding-top: 0; margin-top: 0; border-top: none; }
+  .record-group-title {
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
   .collapsible-header {
     display: flex;
     align-items: center;
@@ -2013,45 +2025,59 @@ const ATTR_CATEGORIES = [
   },
 ];
 
+// 칩 구간이 다닥다닥 붙어 보인다는 요청으로, 큰 그룹 제목 + 구분선으로 시각적으로 나눈다
+function buildRecordGroup(groupTitle, children) {
+  const group = document.createElement('div');
+  group.className = 'record-group';
+  const heading = document.createElement('div');
+  heading.className = 'record-group-title';
+  heading.textContent = groupTitle;
+  group.appendChild(heading);
+  children.forEach((child) => group.appendChild(child));
+  return group;
+}
+
 function buildSketchSections() {
   const wrap = document.createElement('div');
   const sketch = state.current.sketch;
 
-  VISUAL_CATEGORIES.forEach(({ key, order, title, thumb }) => {
-    wrap.appendChild(buildChipSection(
+  wrap.appendChild(buildRecordGroup('실루엣 · 넥라인 · 소매', VISUAL_CATEGORIES.map(({ key, order, title, thumb }) =>
+    buildChipSection(
       title, order, sketch[key], LABEL.ko[key],
       (id) => updateSketchField(key, id), thumb,
       sketch.custom[key], (v) => updateCustomText(key, v),
-    ));
-  });
+    ),
+  )));
 
   // 파츠별로 원단(소재)과 오버레이(장식)를 따로 고른다 (사용자 요청) — 참고 메모+이미지
   // (textureRef)로 목록에 없는 원단을 자유롭게 남길 수 있어서, 원단의 "기타" 칩은 굳이
   // 안 두기로 함. MATERIAL_ORDER 자체는 인코딩 호환성 때문에 그대로 두고 칩 렌더링에서만 제외한다
+  const materialChildren = [];
   MATERIAL_CATEGORIES.forEach(({ key, refKey, title, materialOrder }, i) => {
-    wrap.appendChild(buildChipSection(
+    materialChildren.push(buildChipSection(
       title, materialOrder, sketch[key], LABEL.ko.material,
       (id) => updateSketchField(key, id), buildMaterialSwatch,
       sketch.custom[key], (v) => updateCustomText(key, v),
       MATERIAL_DESC,
     ));
     const overlayCat = OVERLAY_CATEGORIES[i];
-    wrap.appendChild(buildChipSection(
+    materialChildren.push(buildChipSection(
       overlayCat.title, OVERLAY_CHIP_ORDER, sketch[overlayCat.key], LABEL.ko.overlay,
       (id) => updateSketchField(overlayCat.key, id), buildOverlaySwatch,
       sketch.custom[overlayCat.key], (v) => updateCustomText(overlayCat.key, v),
       OVERLAY_DESC,
     ));
-    wrap.appendChild(buildTextureRefBlock(refKey));
+    materialChildren.push(buildTextureRefBlock(refKey));
   });
+  wrap.appendChild(buildRecordGroup('원단 · 오버레이', materialChildren));
 
-  ATTR_CATEGORIES.forEach(({ key, order, title, thumb }) => {
-    wrap.appendChild(buildChipSection(
+  wrap.appendChild(buildRecordGroup('허리 라인 · 뒷모습 · 트레인', ATTR_CATEGORIES.map(({ key, order, title, thumb }) =>
+    buildChipSection(
       title, order, sketch[key], LABEL.ko[key],
       (id) => updateSketchField(key, id), thumb,
       sketch.custom[key], (v) => updateCustomText(key, v),
-    ));
-  });
+    ),
+  )));
 
   return wrap;
 }
