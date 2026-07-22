@@ -138,9 +138,9 @@ Fitting = {
 Sketch = {
   silhouette:     'aline'|'ballgown'|'mermaid'|'trumpet'|'sheath'|'empire'|'other'|'princess',
   neckline:       'sweetheart'|'v'|'square'|'halter'|'bateau'|'illusion'|'straight'|'jewel'|'scoop'|'other'|'queenanne'|'surplice'|'illusionheart'|'sweetheartdeep',
-  sleeve:         'none'|'cap'|'short'|'long'|'puff'|'other'|'offshoulder',
+  sleeve:         'none'|'cap'|'short'|'long'|'puff'|'other'|'offshoulder'|'offshoulderplain',
   waist:          'natural'|'drop'|'empire'|'basque'|'other',
-  back:           'vback'|'lowback'|'keyhole'|'buttons'|'illusion'|'other'|'corset',
+  back:           'vback'|'lowback'|'keyhole'|'buttons'|'illusion'|'other'|'corset'|'plain',
   train:          'none'|'sweep'|'chapel'|'cathedral'|'other',
   skirtMaterial:  Material, skirtOverlay: Overlay,
   bodiceMaterial: Material, bodiceOverlay: Overlay,
@@ -281,6 +281,11 @@ const LABEL = {
   걸 임의로 그려 넣는 문제가 실사용에서 확인됐다. 민소매 설명 자체도 "strictly sleeveless
   — bare shoulders and arms fully exposed with nothing draped, strapped, or covering the
   shoulders"처럼 명시적으로 풀어 써서 애매하게 해석될 여지를 줄인다
+- **단추 장식 백(`back: 'buttons'`)도 영문 설명에 "stopping at the natural waistline —
+  the buttons must NOT continue down the skirt"를 명시한다.** 실사용에서 이미지 생성
+  AI가 단추 줄을 치마 밑단까지 이어 그리는 문제가 확인됐다 — 실제 단추 장식 웨딩드레스는
+  단추가 보디스 뒷면에서 끝나고 치마에는 없는 게 일반적이라, 프롬프트에서 이 범위를
+  명시적으로 못 박는다
 - 기록 화면 상단에 "AI 프롬프트 복사" 버튼으로 제공. `navigator.clipboard.writeText`로
   복사하고, "복사됨 ✓" 텍스트로 잠깐 알려준다 (§5.1의 이미지 복사와 같은 패턴)
 ---
