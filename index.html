@@ -2635,22 +2635,23 @@ async function loadSvgAsImage(svgEl, pixelW, pixelH) {
   return loadImage(dataUrl);
 }
 
-function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+// 실제로 그리지 않고 줄바꿈된 줄 배열만 계산한다 — 캔버스 크기를 정하기 전에 메모가 몇
+// 줄이 될지 먼저 알아야, 메모가 길어질 때 다음 파츠 라벨과 겹치지 않게 셀 높이를 늘릴 수 있다
+function wrapTextLines(ctx, text, maxWidth) {
   const words = text.split(' ');
+  const lines = [];
   let line = '';
-  let lineY = y;
   words.forEach((word) => {
     const test = line ? `${line} ${word}` : word;
     if (line && ctx.measureText(test).width > maxWidth) {
-      ctx.fillText(line, x, lineY);
+      lines.push(line);
       line = word;
-      lineY += lineHeight;
     } else {
       line = test;
     }
   });
-  if (line) ctx.fillText(line, x, lineY);
-  return lineY + lineHeight;
+  if (line) lines.push(line);
+  return lines;
 }
 
 // 내보내기 전용 순서/라벨. 위→아래로 소매/바디/스커트 (사용자 요청 순서 — 앱 안의
@@ -2669,16 +2670,36 @@ function textureRefPartsWithContent(textureRef) {
   });
 }
 
-// textureRef 참고 메모+이미지를 드레스 그림 오른쪽에 위→아래로 쌓아 그려 넣는다 (SPEC.md §5.1)
-async function drawTextureRefColumn(ctx, parts, textureRef, x, y, colWidth, cellH) {
-  const imgSize = 64;
-  const cx = x + colWidth / 2;
+const REF_IMG_SIZE = 64;
+const REF_NOTE_LINE_H = 13;
+const REF_NOTE_FONT = '11px sans-serif';
 
-  for (let i = 0; i < parts.length; i++) {
-    const { key, label } = parts[i];
+// 파츠 하나(라벨+이미지+메모)가 실제로 차지할 높이를 먼저 계산한다 — 메모가 길어져 여러 줄로
+// 감기면 그만큼 셀이 커져야 다음 파츠 라벨과 안 겹친다. 캔버스 크기를 정하기 전에 미리
+// 알아야 해서, 실제로 그리는 데 쓸 캔버스와는 별개인 측정 전용 컨텍스트로 계산한다
+function measureTextureRefCells(measureCtx, textureRef, parts, colWidth) {
+  return parts.map(({ key, label }) => {
     const ref = textureRef[key];
-    const cellY = y + i * cellH;
+    let h = 10; // 라벨
+    if (ref.image) h += REF_IMG_SIZE + 14;
+    let noteLines = [];
+    if (ref.note) {
+      measureCtx.font = REF_NOTE_FONT;
+      noteLines = wrapTextLines(measureCtx, ref.note, colWidth - 8);
+      h += noteLines.length * REF_NOTE_LINE_H;
+    }
+    h += 16; // 다음 파츠와의 여백
+    return { label, ref, noteLines, cellH: h };
+  });
+}
 
+// textureRef 참고 메모+이미지를 드레스 그림 오른쪽에 위→아래로 쌓아 그려 넣는다 (SPEC.md §5.1).
+// cellLayouts는 measureTextureRefCells()로 미리 계산해둔, 파츠별 실제 높이가 반영된 배열이다
+async function drawTextureRefColumn(ctx, cellLayouts, x, y, colWidth) {
+  const cx = x + colWidth / 2;
+  let cellY = y;
+
+  for (const { label, ref, noteLines, cellH } of cellLayouts) {
     ctx.fillStyle = CANVAS_COLORS.text;
     ctx.textAlign = 'center';
     ctx.font = 'bold 12px sans-serif';
@@ -2687,17 +2708,18 @@ async function drawTextureRefColumn(ctx, parts, textureRef, x, y, colWidth, cell
     let nextY = cellY + 10;
     if (ref.image) {
       const img = await loadImage(ref.image);
-      ctx.drawImage(img, cx - imgSize / 2, nextY, imgSize, imgSize);
+      ctx.drawImage(img, cx - REF_IMG_SIZE / 2, nextY, REF_IMG_SIZE, REF_IMG_SIZE);
       ctx.strokeStyle = CANVAS_COLORS.outline;
       ctx.lineWidth = 1;
-      ctx.strokeRect(cx - imgSize / 2, nextY, imgSize, imgSize);
-      nextY += imgSize + 14;
+      ctx.strokeRect(cx - REF_IMG_SIZE / 2, nextY, REF_IMG_SIZE, REF_IMG_SIZE);
+      nextY += REF_IMG_SIZE + 14;
     }
-    if (ref.note) {
-      ctx.font = '11px sans-serif';
+    if (noteLines.length) {
+      ctx.font = REF_NOTE_FONT;
       ctx.fillStyle = CANVAS_COLORS.text;
-      wrapText(ctx, ref.note, cx, nextY, colWidth - 8, 13);
+      noteLines.forEach((line, i) => ctx.fillText(line, cx, nextY + i * REF_NOTE_LINE_H));
     }
+    cellY += cellH;
   }
 }
 
@@ -2709,12 +2731,13 @@ async function exportFittingImage(fitting) {
   const dressH = Math.round(dressW * (700 / 400));
   const headerH = 56;
   const refColW = 130;
-  const refCellH = 120;
   const refYOffset = 24; // 스와치 칼럼을 드레스 그림보다 살짝 아래에서 시작하게
 
   const parts = textureRefPartsWithContent(fitting.sketch.textureRef);
   const hasRef = parts.length > 0;
-  const refColH = parts.length * refCellH;
+  const measureCtx = document.createElement('canvas').getContext('2d');
+  const cellLayouts = measureTextureRefCells(measureCtx, fitting.sketch.textureRef, parts, refColW);
+  const refColH = cellLayouts.reduce((sum, c) => sum + c.cellH, 0);
 
   const bodyH = Math.max(dressH, hasRef ? refYOffset + refColH : 0);
   const baseW = gap + dressW + (hasRef ? gap + refColW : 0) + gap;
@@ -2743,7 +2766,7 @@ async function exportFittingImage(fitting) {
   ctx.drawImage(dressImg, gap, headerH, dressW, dressH);
 
   if (hasRef) {
-    await drawTextureRefColumn(ctx, parts, fitting.sketch.textureRef, gap + dressW + gap, headerH + refYOffset, refColW, refCellH);
+    await drawTextureRefColumn(ctx, cellLayouts, gap + dressW + gap, headerH + refYOffset, refColW);
   }
 
   return canvas;
