@@ -411,9 +411,9 @@ const LABEL = {
     },
     sleeve: {
       none: '민소매', cap: '캡소매', short: '반팔', long: '긴소매',
-      puff: '퍼프소매', other: '기타', offshoulder: '오프숄더 밴드(리본)',
-      offshoulderplain: '오프숄더 밴드(민무늬)', coldshoulder: '콜드숄더 소매',
-      offshoulderfold: '오프숄더 밴드(폴드칼라)',
+      puff: '퍼프소매', other: '기타',
+      offshoulderplain: '오프숄더', coldshoulder: '콜드숄더 소매',
+      offshoulderfold: '오프숄더(폴드칼라)',
     },
     // 원단(베이스)과 오버레이(장식)를 분리 — 웨딩드레스는 기본 원단 위에 레이스/비즈 등
     // 오버레이가 따로 얹히는 경우가 많아서 소재 선택을 두 축으로 나눴다 (사용자 요청)
@@ -462,7 +462,6 @@ const LABEL = {
       none: 'strictly sleeveless — bare shoulders and arms fully exposed with nothing draped, strapped, or covering the shoulders (no illusion mesh, no straps, no cap sleeve of any kind)',
       cap: 'cap sleeves', short: 'short sleeves', long: 'long sleeves',
       puff: 'puff sleeves', other: 'custom sleeves',
-      offshoulder: 'off-the-shoulder draped sleeve band with a gathered bow/knot at center front',
       offshoulderplain: 'off-the-shoulder draped sleeve band with a smooth folded finish and no bow, knot, or gathering at center front',
       offshoulderfold: 'off-the-shoulder band with a wide turned-down fold like a portrait/sailor collar, meeting in a V at center front, often with a contrast trim edge',
       coldshoulder: 'small gathered/ruched puff clusters sitting directly on top of each shoulder only, with the rest of the arm (upper arm and forearm) left completely bare — not a long sleeve',
@@ -510,11 +509,13 @@ const NECKLINE_ORDER = ['sweetheart', 'v', 'square', 'halter', 'bateau', 'illusi
 // 스위트하트 바로 다음에 위치. bardot(바르도넥)은 참고 이미지를 다시 보니 넥라인이 아니라
 // 오프숄더 밴드 소매 계열이라 넥라인에서는 뺐다 (사용자 확인)
 const NECKLINE_CHIP_ORDER = ['sweetheart', 'sweetheartdeep', 'illusionheart', 'v', 'surplice', 'square', 'straight', 'illusion', 'bateau', 'jewel', 'scoop', 'halter', 'queenanne'];
-// detachable(탈부착소매)은 기능 자체를 제거했다 (사용자 요청). offshoulder(오프숄더 밴드,
-// 리본 버전)/offshoulderplain(매듭 없는 버전)/offshoulderfold(폴드칼라 버전)/coldshoulder는
+// detachable(탈부착소매)/offshoulder(매듭 있는 리본 버전)는 기능 자체를 제거했다(사용자
+// 요청 — 오프숄더는 민무늬 버전 하나로 통일). offshoulderplain/offshoulderfold/coldshoulder는
 // 참고 이미지 기반으로 새로 추가한 것 — 재배열 금지 규칙 때문에 other 뒤에 이어 붙인다
-const SLEEVE_ORDER = ['none', 'cap', 'short', 'long', 'puff', 'other', 'offshoulder', 'offshoulderplain', 'coldshoulder', 'offshoulderfold'];
-const SLEEVE_CHIP_ORDER = SLEEVE_ORDER.filter((id) => id !== 'other');
+const SLEEVE_ORDER = ['none', 'cap', 'short', 'long', 'puff', 'other', 'offshoulderplain', 'coldshoulder', 'offshoulderfold'];
+// 사용자가 정리한 순서대로 직접 나열 (기타 제외) — 오프숄더(폴드칼라)가 오프숄더 바로
+// 다음에 오게 배치
+const SLEEVE_CHIP_ORDER = ['none', 'cap', 'short', 'long', 'puff', 'offshoulderplain', 'offshoulderfold', 'coldshoulder'];
 // 원단(소재)과 오버레이(장식)를 두 축으로 나눈 텍스처 모델 (사용자 요청). 파츠(보디스/
 // 스커트/소매)마다 실제로 쓰이는 소재 목록은 다르지만, 오버레이 목록은 세 파츠가 동일하다.
 // MATERIAL_ORDER/OVERLAY_ORDER는 인코딩 순서라 재배열 금지, 값 추가는 끝에만 한다. 칩 표시
@@ -1199,7 +1200,8 @@ function offshoulderBand(A) {
   };
 }
 
-// 매듭(리본) 있는 버전 — 참고 이미지 중 중앙 앞에서 천이 모여 매듭지는 스타일
+// 매듭(리본) 있는 버전 — 오프숄더를 민무늬 버전 하나로 통일하기로 하면서 칩 목록/인코딩
+// 배열에서는 뺐다(사용자 요청). 이미 골라서 저장한 기존 기록이 있을 수 있어 함수는 남겨둔다
 sleeve.offshoulder = (A) => {
   const { d: band, dipTopY, dipBottomY } = offshoulderBand(A);
   const knotHalf = 10;
