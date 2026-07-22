@@ -2154,6 +2154,9 @@ function buildSketchSections() {
   // 안 두기로 함. MATERIAL_ORDER 자체는 인코딩 호환성 때문에 그대로 두고 칩 렌더링에서만 제외한다
   const materialChildren = [];
   MATERIAL_CATEGORIES.forEach(({ key, refKey, title, materialOrder }, i) => {
+    // 민소매면 소매 자체가 안 그려지니(소매 원단/오버레이가 렌더링에 전혀 영향을 못 준다)
+    // 소매 원단/오버레이 칸을 통째로 숨긴다 (사용자 요청)
+    if (refKey === 'sleeve' && sketch.sleeve === 'none') return;
     materialChildren.push(buildChipSection(
       title, materialOrder, sketch[key], LABEL.ko.material,
       (id) => updateSketchField(key, id), buildMaterialSwatch,
