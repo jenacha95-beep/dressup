@@ -1559,7 +1559,7 @@ function migrateStore() {
 // 그대로 2라서 migrateStore를 안 거치므로, 불러올 때마다 없는 칸만 기본값으로 채워준다
 function ensureTextureRef(sketch) {
   if (!sketch.textureRef) sketch.textureRef = {};
-  ['skirt', 'bodice', 'sleeve'].forEach((partKey) => {
+  ['skirt', 'bodice', 'sleeve', 'back'].forEach((partKey) => {
     if (!sketch.textureRef[partKey]) sketch.textureRef[partKey] = { note: '', image: null };
   });
 }
@@ -1646,6 +1646,7 @@ function defaultSketch() {
       skirt: { note: '', image: null },
       bodice: { note: '', image: null },
       sleeve: { note: '', image: null },
+      back: { note: '', image: null },
     },
     custom: {},
   };
@@ -2170,13 +2171,18 @@ function buildSketchSections() {
   });
   wrap.appendChild(buildRecordGroup('원단 · 오버레이', materialChildren));
 
-  wrap.appendChild(buildRecordGroup('허리 라인 · 뒷모습 · 트레인', ATTR_CATEGORIES.map(({ key, order, title, thumb }) =>
-    buildChipSection(
+  const attrChildren = [];
+  ATTR_CATEGORIES.forEach(({ key, order, title, thumb }) => {
+    attrChildren.push(buildChipSection(
       title, order, sketch[key], LABEL.ko[key],
       (id) => updateSketchField(key, id), thumb,
       sketch.custom[key], (v) => updateCustomText(key, v),
-    ),
-  )));
+    ));
+    // 뒷모습은 정면 스케치로 표현이 안 되는 경우(리본/보우 백 등)가 있어서, 스커트/보디스/
+    // 소매처럼 참고 메모+이미지를 남길 수 있게 한다 (사용자 요청)
+    if (key === 'back') attrChildren.push(buildTextureRefBlock('back'));
+  });
+  wrap.appendChild(buildRecordGroup('허리 라인 · 뒷모습 · 트레인', attrChildren));
 
   return wrap;
 }
@@ -2649,6 +2655,7 @@ const TEXTURE_REF_PARTS = [
   { key: 'sleeve', label: '소매' },
   { key: 'bodice', label: '바디' },
   { key: 'skirt', label: '스커트' },
+  { key: 'back', label: '뒷모습' },
 ];
 
 function textureRefPartsWithContent(textureRef) {
@@ -2883,6 +2890,11 @@ function buildAiPrompt(sketch) {
     return `${labelEn} in ${fabric}${overlayPhrase}${note}`;
   }).join('; ');
 
+  // 뒷모습은 정면 스케치로 표현이 안 되는 디테일(리본/보우 백 등)이 있을 수 있어서, 참고
+  // 메모가 있으면 그대로 덧붙인다 (사용자 요청)
+  const backRef = sketch.textureRef && sketch.textureRef.back;
+  const backNote = backRef && backRef.note ? `, matching this reference: ${backRef.note}` : '';
+
   return [
     'A professional studio photograph of a couture wedding dress on a headless dress form mannequin, elegant bridal editorial style.',
     'Show exactly two full-body views side by side in one image: front view on the left, back view on the right. Each view must be a complete, uncropped shot showing the entire dress from shoulder to hem. Do not add any extra close-up, zoomed-in, or cropped detail insets of fabric/texture — only the two full views.',
@@ -2890,7 +2902,7 @@ function buildAiPrompt(sketch) {
     `Neckline: ${resolve('neckline', 'neckline')}.`,
     `Sleeves: ${resolve('sleeve', 'sleeve')}.`,
     `Waistline: ${resolve('waist', 'waist')}.`,
-    `Back: ${resolve('back', 'back')}.`,
+    `Back: ${resolve('back', 'back')}${backNote}.`,
     `Train: ${resolve('train', 'train')}.`,
     `Fabric by part — ${fabricLine}.`,
     'Even though each part uses a different fabric, render the whole gown as one cohesive piece: unify the overall color into a single consistent ivory/white tone, with the same soft studio lighting and color grading across the skirt, bodice, and sleeves so no part looks mismatched or pasted-on.',

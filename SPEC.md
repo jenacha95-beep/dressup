@@ -145,7 +145,7 @@ Sketch = {
   skirtMaterial:  Material, skirtOverlay: Overlay,
   bodiceMaterial: Material, bodiceOverlay: Overlay,
   sleeveMaterial: Material, sleeveOverlay: Overlay,
-  textureRef:     { skirt: TextureRef, bodice: TextureRef, sleeve: TextureRef },
+  textureRef:     { skirt: TextureRef, bodice: TextureRef, sleeve: TextureRef, back: TextureRef },
   custom:         { [category: string]: string }  // other 선택 시 사용자 입력. 예: { neckline: '아시메트릭' }
 }
 Material = 'mikado'|'satin'|'crepe'|'taffeta'|'chiffon'|'organza'|'tulle'|'illusiontulle'|'other'
@@ -200,7 +200,7 @@ const LABEL = {
 ```
 **기본값**: 새 기록은 `aline` / `sweetheart` / `none`(sleeve) / `natural` / `vback` / `none`(train) /
 스커트·보디스·소매 모두 원단 `satin` + 오버레이 `none`으로 시작한다.
-`textureRef`의 skirt/bodice/sleeve는 각각 `{ note: '', image: null }`로 시작한다.
+`textureRef`의 skirt/bodice/sleeve/back은 각각 `{ note: '', image: null }`로 시작한다.
 아무것도 안 골라도 저장 가능해야 한다.
 
 **과거 데이터 마이그레이션**: 원단/오버레이를 분리하기 전에는 파츠당 texture 값 하나
@@ -217,9 +217,9 @@ const LABEL = {
 - 구현: `XMLSerializer`로 SVG 직렬화 → `data:image/svg+xml` → `Image` 로드 → `canvas.drawImage` → `canvas.toBlob`
 - 이미지 안에 매장명·드레스명·별점을 텍스트로 함께 그려 넣는다. 그림만 있으면 받는 사람이 구분 못 한다
 - 텍스처 `<pattern>`은 직렬화 시 `<defs>`가 함께 포함되도록 SVG 루트째로 복제한다
-- **`textureRef`(스커트/보디스/소매 참고 메모+이미지)가 있으면 드레스 그림 옆에 작은 참고
-  스와치로 함께 그려 넣는다** — 파츠 라벨("스커트"/"보디스"/"소매") + 업로드한 참고 이미지
-  썸네일 + 메모 텍스트 한 줄. 참고 이미지가 없는 파츠는 건너뛴다. 이렇게 완성된 한 장을
+- **`textureRef`(스커트/보디스/소매/뒷모습 참고 메모+이미지)가 있으면 드레스 그림 옆에 작은
+  참고 스와치로 함께 그려 넣는다** — 파츠 라벨("스커트"/"보디스"/"소매"/"뒷모습") + 업로드한
+  참고 이미지 썸네일 + 메모 텍스트 한 줄. 참고 이미지가 없는 파츠는 건너뛴다. 이렇게 완성된 한 장을
   "재질 참고 시트"로 쓴다 (레퍼런스: 유저가 제공한 원단/디테일 설명 시트 스타일 — 캐릭터
   일러스트가 아니라 스와치+라벨 구성만 참고)
   - 이건 URL 공유(§5.2)와 무관하게 **이미지 내보내기에서만** 동작한다. 참고 이미지는 URL
@@ -269,8 +269,10 @@ const LABEL = {
   that holds its shape", beads → "a hand-beaded embellishment overlay with shimmering
   crystal details". 오버레이가 `none`이 아니면 "in {원단} with {오버레이}" 형태로 합쳐 쓴다
 - "기타" 항목(넥라인 등)이나 "기타" 원단은 직접 입력한 텍스트가 있으면 그대로 쓴다
-- 텍스처 참고 메모(`textureRef.note`)가 있으면 해당 파츠 설명 뒤에 "matching this
-  reference: ..."로 덧붙인다
+- 참고 메모(`textureRef.note`)가 있으면 해당 파츠 설명 뒤에 "matching this
+  reference: ..."로 덧붙인다 — 스커트/보디스/소매의 원단 설명뿐 아니라, 뒷모습(`textureRef.back`)도
+  같은 방식으로 Back 문장 뒤에 붙는다. 뒷모습은 정면 스케치로는 표현이 안 되는 디테일
+  (리본/보우 백 등)이 있을 수 있어서, 뒷모습에도 참고 메모+이미지를 남길 수 있게 했다
 - 파츠마다 다른 원단이어도 **한 벌의 드레스처럼 톤이 통일되게 렌더링하라**는 문장을
   마지막에 추가한다 — 스커트/보디스/소매가 따로 노는 느낌이 나지 않도록
 - 기록 화면 상단에 "AI 프롬프트 복사" 버튼으로 제공. `navigator.clipboard.writeText`로
