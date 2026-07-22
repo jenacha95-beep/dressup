@@ -153,16 +153,16 @@
   .chip.text-only { min-width: auto; padding: 8px 12px; }
   .other-input-wrap { margin-top: 6px; }
   /* 소재/오버레이 칩 설명 — PC는 title 호버로도 보이지만, 모바일은 호버가 없어서 선택한
-     칩의 설명을 제목 바로 아래 눈에 띄는 박스로 항상 보여준다 (사용자 요청). 은은한 캡션
-     텍스트로는 놓치기 쉬워서, 배경/테두리가 있는 박스 + 아이콘으로 명확히 드러나게 한다 */
+     칩의 설명을 제목 바로 아래 눈에 띄는 박스로 항상 보여준다 (사용자 요청). 참고 메모
+     입력칸(.texture-ref, 흰 배경+테두리)과 서식이 비슷해 헷갈린다는 피드백으로, 배경보다
+     어두운 톤의 패널을 써서 뚜렷하게 구분한다(테두리 없이 배경색만으로 구분) */
   .chip-desc {
     display: flex;
     align-items: center;
     gap: 6px;
     font-size: 12.5px;
     color: var(--text);
-    background: #ffffff88;
-    border: 1px solid var(--outline);
+    background: #D9D1C9;
     border-radius: 8px;
     padding: 6px 10px;
     margin: 2px 0 8px;
@@ -1895,6 +1895,9 @@ function buildTextureRefBlock(refKey) {
   noteInput.placeholder = '참고 메모(선택) — 예: 이 느낌의 레이스';
   noteInput.value = ref.note || '';
   noteInput.addEventListener('input', (e) => updateTextureRefNote(refKey, e.target.value));
+  // 이미지를 복사해둔 채로 이 칸에 포커스하고 Ctrl+V(붙여넣기)하면 파일 선택 없이 바로
+  // 추가된다 (사용자 요청 — 폴더에서 고르는 것 말고 클립보드로도 추가하고 싶다는 요청)
+  noteInput.addEventListener('paste', (e) => handleTextureRefPaste(e, refKey));
   wrap.appendChild(noteInput);
 
   const imageRow = document.createElement('div');
@@ -1916,7 +1919,7 @@ function buildTextureRefBlock(refKey) {
   } else {
     const label = document.createElement('label');
     label.className = 'btn';
-    label.textContent = '참고 이미지 추가';
+    label.textContent = '파일에서 추가';
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
     fileInput.accept = 'image/*';
@@ -1927,10 +1930,51 @@ function buildTextureRefBlock(refKey) {
     });
     label.appendChild(fileInput);
     imageRow.appendChild(label);
+
+    // Async Clipboard API로 클립보드 이미지를 명시적으로 읽어온다. 미지원/권한 거부 브라우저는
+    // 버튼 결과 텍스트로 안내하고, 메모 칸에 Ctrl+V하는 방법으로 대체할 수 있다
+    const pasteBtn = document.createElement('button');
+    pasteBtn.type = 'button';
+    pasteBtn.className = 'btn';
+    pasteBtn.textContent = '클립보드에서 붙여넣기';
+    pasteBtn.addEventListener('click', () => handleClipboardPasteClick(refKey, pasteBtn));
+    imageRow.appendChild(pasteBtn);
   }
 
   wrap.appendChild(imageRow);
   return wrap;
+}
+
+function handleTextureRefPaste(e, refKey) {
+  const items = e.clipboardData && e.clipboardData.items;
+  if (!items) return;
+  const imageItem = Array.from(items).find((item) => item.type.startsWith('image/'));
+  if (!imageItem) return;
+  e.preventDefault();
+  const file = imageItem.getAsFile();
+  if (file) resizeImageToDataUrl(file, 400, (dataUrl) => updateTextureRefImage(refKey, dataUrl));
+}
+
+async function handleClipboardPasteClick(refKey, btnEl) {
+  if (!navigator.clipboard || !navigator.clipboard.read) {
+    flashButtonResult(btnEl, false, '미지원 브라우저 — 메모 칸에 Ctrl+V 해보세요');
+    return;
+  }
+  try {
+    const items = await navigator.clipboard.read();
+    const imageItem = items.find((item) => item.types.some((t) => t.startsWith('image/')));
+    if (!imageItem) {
+      flashButtonResult(btnEl, false, '클립보드에 이미지가 없어요');
+      return;
+    }
+    const type = imageItem.types.find((t) => t.startsWith('image/'));
+    const blob = await imageItem.getType(type);
+    // 성공하면 이 버튼 자체가 썸네일+삭제 버튼으로 즉시 바뀌므로(리렌더), 버튼에 성공
+    // 텍스트를 남길 필요가 없다 — 실패했을 때만 버튼에 안내 문구를 남긴다
+    resizeImageToDataUrl(blob, 400, (dataUrl) => updateTextureRefImage(refKey, dataUrl));
+  } catch (e) {
+    flashButtonResult(btnEl, false, '클립보드 읽기 실패');
+  }
 }
 
 // 칩 한 분류(실루엣/넥라인/소매/텍스처/허리라인/뒷모습/트레인) 공용 렌더러.
