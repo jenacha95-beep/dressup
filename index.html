@@ -457,7 +457,8 @@ const LABEL = {
       other: 'custom neckline',
     },
     sleeve: {
-      none: 'sleeveless', cap: 'cap sleeves', short: 'short sleeves', long: 'long sleeves',
+      none: 'strictly sleeveless — bare shoulders and arms fully exposed with nothing draped, strapped, or covering the shoulders (no illusion mesh, no straps, no cap sleeve of any kind)',
+      cap: 'cap sleeves', short: 'short sleeves', long: 'long sleeves',
       puff: 'puff sleeves', other: 'custom sleeves',
       offshoulder: 'off-the-shoulder draped sleeve band with a gathered knot at center front',
     },
@@ -2876,11 +2877,15 @@ function buildAiPrompt(sketch) {
     return (LABEL.en[category] && LABEL.en[category][value]) || value;
   };
 
-  const fabricLine = [
+  // 민소매면 소매 원단을 언급 자체를 하지 않는다 — "sleeves in ..." 문장이 남아 있으면
+  // 이미지 생성 AI가 민소매 지시와 모순된다고 보고 어깨에 뭔가(시스루 캡 등)를 임의로
+  // 그려 넣는 문제가 있었다 (사용자 확인)
+  const fabricParts = [
     ['skirt', 'skirtMaterial', 'skirtOverlay', 'skirt'],
     ['bodice', 'bodiceMaterial', 'bodiceOverlay', 'bodice'],
-    ['sleeve', 'sleeveMaterial', 'sleeveOverlay', 'sleeves'],
-  ].map(([refKey, materialKey, overlayKey, labelEn]) => {
+  ];
+  if (sketch.sleeve !== 'none') fabricParts.push(['sleeve', 'sleeveMaterial', 'sleeveOverlay', 'sleeves']);
+  const fabricLine = fabricParts.map(([refKey, materialKey, overlayKey, labelEn]) => {
     const materialId = sketch[materialKey];
     const fabric = (materialId === 'other' && sketch.custom && sketch.custom[materialKey])
       || MATERIAL_PROMPT_DESC[materialId]
@@ -2908,7 +2913,7 @@ function buildAiPrompt(sketch) {
     `Back: ${resolve('back', 'back')}${backNote}.`,
     `Train: ${resolve('train', 'train')}.`,
     `Fabric by part — ${fabricLine}.`,
-    'Even though each part uses a different fabric, render the whole gown as one cohesive piece: unify the overall color into a single consistent ivory/white tone, with the same soft studio lighting and color grading across the skirt, bodice, and sleeves so no part looks mismatched or pasted-on.',
+    `Even though each part uses a different fabric, render the whole gown as one cohesive piece: unify the overall color into a single consistent ivory/white tone, with the same soft studio lighting and color grading across the${sketch.sleeve === 'none' ? ' skirt and bodice' : ' skirt, bodice, and sleeves'} so no part looks mismatched or pasted-on.`,
     'Soft studio lighting, realistic fabric drape and texture, photorealistic, high detail.',
   ].join(' ');
 }

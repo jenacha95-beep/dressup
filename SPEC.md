@@ -275,6 +275,12 @@ const LABEL = {
   (리본/보우 백 등)이 있을 수 있어서, 뒷모습에도 참고 메모+이미지를 남길 수 있게 했다
 - 파츠마다 다른 원단이어도 **한 벌의 드레스처럼 톤이 통일되게 렌더링하라**는 문장을
   마지막에 추가한다 — 스커트/보디스/소매가 따로 노는 느낌이 나지 않도록
+- **민소매(`sleeve: 'none'`)일 때는 소매 원단 언급 자체를 프롬프트에서 뺀다**(톤 통일
+  문장의 "sleeves" 언급도 함께 뺀다). "Sleeves: sleeveless"라고만 써도 뒤이어 "sleeves in
+  ..." 원단 문장이 남아 있으면 이미지 생성 AI가 모순으로 받아들여 어깨에 시스루 캡 같은
+  걸 임의로 그려 넣는 문제가 실사용에서 확인됐다. 민소매 설명 자체도 "strictly sleeveless
+  — bare shoulders and arms fully exposed with nothing draped, strapped, or covering the
+  shoulders"처럼 명시적으로 풀어 써서 애매하게 해석될 여지를 줄인다
 - 기록 화면 상단에 "AI 프롬프트 복사" 버튼으로 제공. `navigator.clipboard.writeText`로
   복사하고, "복사됨 ✓" 텍스트로 잠깐 알려준다 (§5.1의 이미지 복사와 같은 패턴)
 ---
