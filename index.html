@@ -482,7 +482,7 @@ const LABEL = {
     },
     back: {
       vback: 'V-back', lowback: 'low back', keyhole: 'keyhole back',
-      buttons: 'a single row of small fabric-covered buttons running down the center back bodice only, stopping at the natural waistline — the buttons must NOT continue down the skirt',
+      buttons: 'a short row of about 8-10 small fabric-covered buttons on the bodice only, spanning only the vertical distance from the neckline down to the natural waistline seam (roughly a hand\'s-width, nowhere near the hem)',
       illusion: 'illusion back', other: 'custom back',
       corset: 'corset-style lace-up back with crisscross ribbon lacing down the center back',
       plain: 'a plain closed back with no special design at all — no cutout, no buttons, no lacing, no embellishment, just a clean seam following the bodice fabric',
@@ -3066,6 +3066,12 @@ function buildAiPrompt(sketch) {
   // 메모가 있으면 그대로 덧붙인다 (사용자 요청)
   const backRef = sketch.textureRef && sketch.textureRef.back;
   const backNote = backRef && backRef.note ? `, matching this reference: ${backRef.note}` : '';
+  // 단추 장식 백을 설명 문장 안에 "허리에서 멈춘다"고만 적어뒀더니, 실사용에서 이미지 생성
+  // AI가 치마 끝까지 단추를 그리는 문제가 계속 재현됐다 — 같은 문장 안에 묻히지 않도록
+  // 독립된 금지 문장을 하나 더 추가해 강하게 못 박는다 (사용자 재확인)
+  const buttonsReinforcement = sketch.back === 'buttons'
+    ? ' Critical: the skirt and train are completely plain fabric with absolutely no buttons anywhere on them — the button row exists ONLY on the upper bodice above the waist seam, never extending onto the skirt.'
+    : '';
 
   return [
     'A professional studio photograph of a couture wedding dress on a headless dress form mannequin, elegant bridal editorial style.',
@@ -3074,7 +3080,7 @@ function buildAiPrompt(sketch) {
     `Neckline: ${resolve('neckline', 'neckline')}.`,
     `Sleeves: ${resolve('sleeve', 'sleeve')}.`,
     `Waistline: ${resolve('waist', 'waist')}.`,
-    `Back: ${resolve('back', 'back')}${backNote}.`,
+    `Back: ${resolve('back', 'back')}${backNote}.${buttonsReinforcement}`,
     `Train: ${resolve('train', 'train')}.`,
     `Fabric by part — ${fabricLine}.`,
     `Even though each part uses a different fabric, render the whole gown as one cohesive piece: unify the overall color into a single consistent ivory/white tone, with the same soft studio lighting and color grading across the${sketch.sleeve === 'none' ? ' skirt and bodice' : ' skirt, bodice, and sleeves'} so no part looks mismatched or pasted-on.`,
