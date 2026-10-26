@@ -2615,14 +2615,32 @@ function buildBackupRow() {
   return wrap;
 }
 
-function exportJson() {
-  const blob = new Blob([JSON.stringify(state.store, null, 2)], { type: 'application/json' });
+// 아티팩트 뷰어에서는 downloads 캐퍼빌리티로, 일반 브라우저에서는 전통적인 앵커 다운로드로 저장한다.
+async function saveFile(filename, blob) {
+  if (window.claude && typeof window.claude.use === 'function') {
+    try {
+      const downloads = await window.claude.use('downloads');
+      if (downloads) {
+        await downloads.save({ filename, data: blob });
+        return true;
+      }
+    } catch (e) {
+      return false;
+    }
+  }
+
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `dress-tour-${todayStr().replace(/-/g, '')}.json`;
+  a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+  return true;
+}
+
+async function exportJson() {
+  const blob = new Blob([JSON.stringify(state.store, null, 2)], { type: 'application/json' });
+  await saveFile(`dress-tour-${todayStr().replace(/-/g, '')}.json`, blob);
 }
 
 // 기존 데이터와 병합하되 id 중복은 건너뛴다 (SPEC.md §5.3)
@@ -3003,12 +3021,7 @@ async function copyCanvasToClipboard(canvas, filename) {
     }
   }
 
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
+  await saveFile(filename, blob);
   return false;
 }
 
